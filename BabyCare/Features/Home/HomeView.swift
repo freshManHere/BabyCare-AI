@@ -112,7 +112,8 @@ struct HomeView: View {
                 ForEach(EventLabel.allCases.filter { $0 != .other }) { label in
                     overviewCard(for: label)
                         .onTapGesture {
-                            appState.switchToTab(.records)
+                            // Bug #22 fix: pass the label filter to RecordsView
+                            appState.switchToRecords(filter: label)
                         }
                 }
             }

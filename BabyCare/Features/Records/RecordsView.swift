@@ -5,6 +5,7 @@ struct RecordsView: View {
     @State private var store = EventStore.shared
     @State private var selectedLabel: EventLabel? = nil
     @State private var showingAddRecord = false
+    @State private var filterScrollProxy: ScrollViewProxy? = nil
 
     private var baby: Baby? { appState.currentBaby }
 
@@ -41,30 +42,67 @@ struct RecordsView: View {
             .sheet(isPresented: $showingAddRecord) {
                 AddRecordView(preselectedLabel: nil)
             }
+            // Bug #25 fix: consume pending filter on appear (handles cold-start first tap)
+            .onAppear {
+                if let filter = appState.pendingRecordsFilter {
+                    selectedLabel = filter
+                    appState.pendingRecordsFilter = nil
+                    DispatchQueue.main.async {
+                        withAnimation {
+                            filterScrollProxy?.scrollTo(filter.id, anchor: .center)
+                        }
+                    }
+                }
+            }
+            // Bug #22 fix: apply label filter passed from HomeView overview card tap
+            .onChange(of: appState.pendingRecordsFilter) { _, newFilter in
+                if let filter = newFilter {
+                    selectedLabel = filter
+                    appState.pendingRecordsFilter = nil
+                    // Auto-scroll the filter bar to the selected chip
+                    DispatchQueue.main.async {
+                        withAnimation {
+                            filterScrollProxy?.scrollTo(filter.id, anchor: .center)
+                        }
+                    }
+                }
+            }
         }
     }
 
     // MARK: - Label Filter Bar
     private var labelFilterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                FilterChip(title: "全部", isSelected: selectedLabel == nil) {
-                    selectedLabel = nil
-                }
-                ForEach(EventLabel.allCases) { label in
-                    FilterChip(
-                        title: label.rawValue,
-                        icon: label.icon,
-                        isSelected: selectedLabel == label
-                    ) {
-                        selectedLabel = (selectedLabel == label) ? nil : label
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    FilterChip(title: "全部", isSelected: selectedLabel == nil) {
+                        selectedLabel = nil
+                    }
+                    .id("all")
+                    ForEach(EventLabel.allCases) { label in
+                        FilterChip(
+                            title: label.rawValue,
+                            icon: label.icon,
+                            isSelected: selectedLabel == label
+                        ) {
+                            selectedLabel = (selectedLabel == label) ? nil : label
+                            withAnimation {
+                                if let sel = selectedLabel {
+                                    proxy.scrollTo(sel.id, anchor: .center)
+                                } else {
+                                    proxy.scrollTo("all", anchor: .center)
+                                }
+                            }
+                        }
+                        .id(label.id)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .background(Color(.systemBackground))
+            .onAppear { filterScrollProxy = proxy }
         }
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Timeline List

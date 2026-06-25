@@ -5,31 +5,47 @@ struct AddRecordView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedLabel: EventLabel
     @State private var store = EventStore.shared
+    // Bug #23 fix: keep a reference to the initial label so we can re-sync state
+    private let initialLabel: EventLabel
 
     init(preselectedLabel: EventLabel?) {
-        _selectedLabel = State(initialValue: preselectedLabel ?? .feeding)
+        let label = preselectedLabel ?? .feeding
+        self.initialLabel = label
+        _selectedLabel = State(initialValue: label)
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Type picker
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(EventLabel.allCases) { label in
-                            FilterChip(
-                                title: label.rawValue,
-                                icon: label.icon,
-                                isSelected: selectedLabel == label
-                            ) {
-                                selectedLabel = label
+                // Bug #23 + #24 fix: ScrollViewReader lets us scroll the selected chip into view
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(EventLabel.allCases) { label in
+                                FilterChip(
+                                    title: label.rawValue,
+                                    icon: label.icon,
+                                    isSelected: selectedLabel == label
+                                ) {
+                                    selectedLabel = label
+                                    withAnimation {
+                                        proxy.scrollTo(label.id, anchor: .center)
+                                    }
+                                }
+                                .id(label.id)
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground))
+                    // Bug #24 fix: scroll to selected chip on appear
+                    .onAppear {
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(selectedLabel.id, anchor: .center)
+                        }
+                    }
                 }
-                .background(Color(.systemBackground))
 
                 Divider()
 
@@ -44,6 +60,9 @@ struct AddRecordView: View {
                     Button("取消") { dismiss() }
                 }
             }
+            // Bug #23 fix: force view identity reset when preselected label differs,
+            // ensuring @State selectedLabel is re-initialized from the new initialLabel
+            .id(initialLabel)
         }
     }
 
