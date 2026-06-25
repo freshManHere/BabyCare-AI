@@ -38,6 +38,11 @@ final class EventStore {
         }
     }
 
+    func deleteAll() {
+        events = []
+        save()
+    }
+
     // MARK: - Persistence
     private func save() {
         do {

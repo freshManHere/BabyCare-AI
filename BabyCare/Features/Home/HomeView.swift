@@ -48,6 +48,16 @@ struct HomeView: View {
 
     // MARK: - #2 Baby Header (宝宝头像、昵称、月龄、日期)
     private var babyHeaderSection: some View {
+        // Bug #32 fix: make header tappable → navigate to 我的 tab to set up baby profile
+        Button {
+            appState.switchToTab(.mine)
+        } label: {
+            babyHeaderContent
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var babyHeaderContent: some View {
         HStack(spacing: 14) {
             Circle()
                 .fill(
