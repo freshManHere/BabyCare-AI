@@ -20,10 +20,6 @@ struct DailySummaryView: View {
         guard let baby else { return [] }
         return store.events(for: .diaperChange, babyId: baby.id)
     }
-    private var diaperEvents: [BabyEvent] {
-        guard let baby else { return [] }
-        return store.events(for: .diaper, babyId: baby.id)
-    }
     private var allTodayEvents: [BabyEvent] {
         guard let baby else { return [] }
         return store.eventsForToday(babyId: baby.id)
@@ -71,7 +67,7 @@ struct DailySummaryView: View {
                 }
 
                 // Other events
-                let otherLabels: [EventLabel] = [.diaper, .outing, .bath, .motorSkill, .symptom, .other]
+                let otherLabels: [EventLabel] = [.outing, .bath, .motorSkill, .symptom, .other]
                 let otherEvents = allTodayEvents.filter { otherLabels.contains($0.label) }
                 if !otherEvents.isEmpty {
                     Section {

@@ -23,7 +23,21 @@ struct RecordsView: View {
             VStack(spacing: 0) {
                 labelFilterBar
                 Divider()
-                timelineList
+                // Show trend chart when a specific label is selected (#26)
+                if let label = selectedLabel {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            LabelTrendChartView(label: label)
+                                .environmentObject(appState)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                            Divider()
+                            lazyTimelineList
+                        }
+                    }
+                } else {
+                    timelineList
+                }
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("记录")
@@ -40,7 +54,8 @@ struct RecordsView: View {
                 }
             }
             .sheet(isPresented: $showingAddRecord) {
-                AddRecordView(preselectedLabel: nil)
+                AddRecordView(preselectedLabel: selectedLabel)
+                    .environmentObject(appState)
             }
             // Bug #25 fix: consume pending filter on appear (handles cold-start first tap)
             .onAppear {
@@ -105,7 +120,7 @@ struct RecordsView: View {
         }
     }
 
-    // MARK: - Timeline List
+    // MARK: - Timeline List (with own scroll, used when no label selected)
     private var timelineList: some View {
         Group {
             if filteredEvents.isEmpty {
@@ -131,6 +146,35 @@ struct RecordsView: View {
                     }
                 }
                 .listStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Lazy timeline (embedded inside outer ScrollView when chart is shown)
+    private var lazyTimelineList: some View {
+        Group {
+            if filteredEvents.isEmpty {
+                ContentUnavailableView(
+                    "暂无记录",
+                    systemImage: "tray",
+                    description: Text("点击右上角 + 添加第一条记录")
+                )
+                .frame(height: 200)
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredEvents) { event in
+                        NavigationLink {
+                            EventDetailView(event: event)
+                        } label: {
+                            EventRowView(event: event)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
+                        Divider().padding(.leading, 72)
+                    }
+                }
+                .background(Color(.systemBackground))
             }
         }
     }

@@ -5,8 +5,10 @@ struct FeedingFormView: View {
     let onSave: (BabyEvent) -> Void
 
     @State private var time = Date()
-    @State private var method: FeedingPayload.FeedingMethod = .breastfeeding
+    @State private var method: FeedingPayload.FeedingMethod = .directBreastfeeding
     @State private var amountText = ""
+    @State private var leftBreastText = ""
+    @State private var rightBreastText = ""
     @State private var wasBurped = false
     @State private var hadSpitUp = false
     @State private var note = ""
@@ -27,9 +29,38 @@ struct FeedingFormView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
 
-            Section("奶量 (ml)") {
-                TextField("选填", text: $amountText)
-                    .keyboardType(.numberPad)
+            // Duration fields: shown for 亲喂 and 混合
+            if method.needsDuration {
+                Section("哺乳时长") {
+                    HStack {
+                        Image(systemName: "l.circle.fill").foregroundStyle(.pink)
+                        Text("左乳")
+                        Spacer()
+                        TextField("分钟", text: $leftBreastText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Text("分钟").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Image(systemName: "r.circle.fill").foregroundStyle(.purple)
+                        Text("右乳")
+                        Spacer()
+                        TextField("分钟", text: $rightBreastText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Text("分钟").foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            // Amount field: shown for 母乳（瓶喂）、奶粉 and 混合
+            if method.needsAmount {
+                Section(method == .mixed ? "补充奶量（ml）" : "奶量（ml）") {
+                    TextField("请输入", text: $amountText)
+                        .keyboardType(.numberPad)
+                }
             }
 
             Section("其他") {
@@ -43,22 +74,25 @@ struct FeedingFormView: View {
             }
 
             Section {
-                Button("保存") {
-                    save()
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundStyle(.white)
-                .listRowBackground(Color.pink)
+                Button("保存") { save() }
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.white)
+                    .listRowBackground(Color.pink)
             }
         }
     }
 
     private func save() {
         guard let baby = appState.currentBaby else { return }
-        let amount = Int(amountText)
+        let left = Int(leftBreastText)
+        let right = Int(rightBreastText)
+        let total = (left ?? 0) + (right ?? 0)
         let payload = FeedingPayload(
             method: method,
-            amountMl: amount,
+            amountMl: Int(amountText),
+            durationMinutes: total > 0 ? total : nil,
+            leftBreastMinutes: left,
+            rightBreastMinutes: right,
             wasBurped: wasBurped,
             hadSpitUp: hadSpitUp
         )

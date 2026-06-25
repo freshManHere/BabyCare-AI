@@ -9,24 +9,53 @@ final class EventStore {
 
     static let shared = EventStore()
 
+    private static let saveURL: URL = {
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return dir.appendingPathComponent("baby_events.json")
+    }()
+
     private init() {
-        loadSampleData()
+        load()
     }
 
     // MARK: - CRUD
     func add(_ event: BabyEvent) {
         events.append(event)
         events.sort { $0.startTime > $1.startTime }
+        save()
     }
 
     func delete(_ event: BabyEvent) {
         events.removeAll { $0.id == event.id }
+        save()
     }
 
     func update(_ event: BabyEvent) {
         if let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index] = event
             events.sort { $0.startTime > $1.startTime }
+            save()
+        }
+    }
+
+    // MARK: - Persistence
+    private func save() {
+        do {
+            let data = try JSONEncoder().encode(events)
+            try data.write(to: Self.saveURL, options: .atomic)
+        } catch {
+            print("[EventStore] Save failed: \(error)")
+        }
+    }
+
+    private func load() {
+        guard FileManager.default.fileExists(atPath: Self.saveURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: Self.saveURL)
+            events = try JSONDecoder().decode([BabyEvent].self, from: data)
+            events.sort { $0.startTime > $1.startTime }
+        } catch {
+            print("[EventStore] Load failed: \(error)")
         }
     }
 
@@ -45,6 +74,25 @@ final class EventStore {
 
     func lastEvent(for label: EventLabel, babyId: UUID) -> BabyEvent? {
         events(for: label, babyId: babyId).first
+    }
+
+    /// Events for a given label within a date range
+    func events(for label: EventLabel, babyId: UUID, from start: Date, to end: Date) -> [BabyEvent] {
+        events.filter {
+            $0.babyId == babyId &&
+            $0.label == label &&
+            $0.startTime >= start &&
+            $0.startTime <= end
+        }.sorted { $0.startTime < $1.startTime }
+    }
+
+    /// All events within a date range
+    func events(babyId: UUID, from start: Date, to end: Date) -> [BabyEvent] {
+        events.filter {
+            $0.babyId == babyId &&
+            $0.startTime >= start &&
+            $0.startTime <= end
+        }.sorted { $0.startTime < $1.startTime }
     }
 
     /// Total sleep duration in minutes for today
@@ -93,20 +141,6 @@ final class EventStore {
             ))
         }
 
-        // 🟡 Watch: blood/mucus in diaper
-        let abnormalDiaper = todayEvents.filter {
-            if case .diaper(let p) = $0.payload { return p.hasBloodOrMucus || p.isAbnormal }
-            return false
-        }
-        if !abnormalDiaper.isEmpty {
-            result.append(Alert(
-                level: .yellow,
-                title: "排便异常",
-                subtitle: "检测到血丝或黏液，建议关注",
-                destination: .assistant
-            ))
-        }
-
         // 🟡 Watch: no feeding in last 4 hours
         let feedingEvents = events(for: .feeding, babyId: babyId)
         let lastFeedingTime = feedingEvents.first?.startTime
@@ -136,67 +170,5 @@ final class EventStore {
         }
 
         return result
-    }
-
-    // MARK: - Sample Data
-    private func loadSampleData() {
-        let babyId = Baby.preview.id
-        let now = Date()
-        let cal = Calendar.current
-
-        events = [
-            // Morning feedings
-            BabyEvent(
-                babyId: babyId, label: .feeding,
-                startTime: cal.date(byAdding: .hour, value: -8, to: now)!,
-                payload: .feeding(FeedingPayload(method: .breastfeeding, amountMl: 110, wasBurped: true, hadSpitUp: false))
-            ),
-            BabyEvent(
-                babyId: babyId, label: .feeding,
-                startTime: cal.date(byAdding: .hour, value: -5, to: now)!,
-                payload: .feeding(FeedingPayload(method: .breastfeeding, amountMl: 130, wasBurped: true, hadSpitUp: false))
-            ),
-            BabyEvent(
-                babyId: babyId, label: .feeding,
-                startTime: cal.date(byAdding: .hour, value: -2, to: now)!,
-                payload: .feeding(FeedingPayload(method: .formula, amountMl: 120, wasBurped: true, hadSpitUp: false))
-            ),
-            // Sleep
-            BabyEvent(
-                babyId: babyId, label: .sleep,
-                startTime: cal.date(byAdding: .hour, value: -7, to: now)!,
-                endTime: cal.date(byAdding: .hour, value: -5, to: now),
-                payload: .sleep(SleepPayload(sleepType: .daytime, soothingMethod: "抱睡", quality: .good))
-            ),
-            BabyEvent(
-                babyId: babyId, label: .sleep,
-                startTime: cal.date(byAdding: .hour, value: -4, to: now)!,
-                endTime: cal.date(byAdding: .minute, value: -90, to: now),
-                payload: .sleep(SleepPayload(sleepType: .daytime, soothingMethod: "奶睡", quality: .fair))
-            ),
-            // Diaper changes
-            BabyEvent(
-                babyId: babyId, label: .diaperChange,
-                startTime: cal.date(byAdding: .hour, value: -6, to: now)!,
-                payload: .diaperChange(DiaperChangePayload(reason: .wet, urineAmount: .medium, hadPoop: false))
-            ),
-            BabyEvent(
-                babyId: babyId, label: .diaperChange,
-                startTime: cal.date(byAdding: .hour, value: -3, to: now)!,
-                payload: .diaperChange(DiaperChangePayload(reason: .poop, urineAmount: .medium, hadPoop: true))
-            ),
-            // Bath
-            BabyEvent(
-                babyId: babyId, label: .bath,
-                startTime: cal.date(byAdding: .hour, value: -1, to: now)!,
-                payload: .bath(BathPayload(waterTempCelsius: 38.0, washedHair: true, usedSkincare: true, afterCondition: "皮肤状态良好"))
-            ),
-            // Motor skill milestone
-            BabyEvent(
-                babyId: babyId, label: .motorSkill,
-                startTime: cal.date(byAdding: .minute, value: -30, to: now)!,
-                payload: .motorSkill(MotorSkillPayload(actionTypes: [.headUp, .tummyTime], succeeded: true))
-            ),
-        ]
     }
 }

@@ -12,9 +12,17 @@ enum AppTab: Hashable {
 @MainActor
 final class AppState: ObservableObject {
     @Published var selectedTab: AppTab = .home
-    @Published var currentBaby: Baby? = Baby.preview
+    @Published var currentBaby: Baby? {
+        didSet { saveBaby() }
+    }
     /// Set by HomeView when tapping an overview card; consumed by RecordsView
     @Published var pendingRecordsFilter: EventLabel? = nil
+
+    private static let babyKey = "saved_baby_v1"
+
+    init() {
+        currentBaby = Self.loadBaby()
+    }
 
     func switchToTab(_ tab: AppTab) {
         selectedTab = tab
@@ -23,5 +31,22 @@ final class AppState: ObservableObject {
     func switchToRecords(filter: EventLabel) {
         pendingRecordsFilter = filter
         selectedTab = .records
+    }
+
+    private func saveBaby() {
+        guard let baby = currentBaby,
+              let data = try? JSONEncoder().encode(baby) else {
+            UserDefaults.standard.removeObject(forKey: Self.babyKey)
+            return
+        }
+        UserDefaults.standard.set(data, forKey: Self.babyKey)
+    }
+
+    private static func loadBaby() -> Baby? {
+        guard let data = UserDefaults.standard.data(forKey: babyKey),
+              let baby = try? JSONDecoder().decode(Baby.self, from: data) else {
+            return nil
+        }
+        return baby
     }
 }

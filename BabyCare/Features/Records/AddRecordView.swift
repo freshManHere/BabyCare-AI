@@ -84,6 +84,26 @@ struct AddRecordView: View {
                 store.add(event)
                 dismiss()
             }
+        case .outing:
+            OutingFormView { event in
+                store.add(event)
+                dismiss()
+            }
+        case .bath:
+            BathFormView { event in
+                store.add(event)
+                dismiss()
+            }
+        case .motorSkill:
+            MotorSkillFormView { event in
+                store.add(event)
+                dismiss()
+            }
+        case .symptom:
+            SymptomFormView { event in
+                store.add(event)
+                dismiss()
+            }
         default:
             GenericFormView(label: selectedLabel) { event in
                 store.add(event)

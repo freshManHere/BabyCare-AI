@@ -4,7 +4,6 @@ import Foundation
 enum EventLabel: String, Codable, CaseIterable, Identifiable {
     case feeding = "喂养"
     case sleep = "睡眠"
-    case diaper = "排泄"
     case diaperChange = "尿不湿"
     case outing = "外出"
     case bath = "洗澡"
@@ -18,7 +17,6 @@ enum EventLabel: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .feeding: return "drop.fill"
         case .sleep: return "moon.fill"
-        case .diaper: return "arrow.triangle.2.circlepath"
         case .diaperChange: return "heart.fill"
         case .outing: return "figure.walk"
         case .bath: return "shower.fill"
@@ -32,7 +30,6 @@ enum EventLabel: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .feeding: return "FeedingColor"
         case .sleep: return "SleepColor"
-        case .diaper: return "DiaperColor"
         case .diaperChange: return "DiaperChangeColor"
         case .outing: return "OutingColor"
         case .bath: return "BathColor"
@@ -59,7 +56,6 @@ struct BabyEvent: Identifiable, Codable {
 enum EventPayload: Codable {
     case feeding(FeedingPayload)
     case sleep(SleepPayload)
-    case diaper(DiaperPayload)
     case diaperChange(DiaperChangePayload)
     case outing(OutingPayload)
     case bath(BathPayload)
@@ -70,15 +66,30 @@ enum EventPayload: Codable {
 
 // MARK: - Feeding
 struct FeedingPayload: Codable {
-    var method: FeedingMethod = .breastfeeding
+    var method: FeedingMethod = .directBreastfeeding
+    /// Bottle amount in ml (used for formula / bottled breastmilk / mixed supplement)
     var amountMl: Int?
+    /// Total nursing duration in minutes (used for directBreastfeeding / mixed)
+    var durationMinutes: Int?
+    /// Left breast minutes (optional detail for directBreastfeeding / mixed)
+    var leftBreastMinutes: Int?
+    /// Right breast minutes (optional detail for directBreastfeeding / mixed)
+    var rightBreastMinutes: Int?
     var wasBurped: Bool = false
     var hadSpitUp: Bool = false
 
     enum FeedingMethod: String, Codable, CaseIterable {
-        case breastfeeding = "母乳"
+        case directBreastfeeding = "亲喂"
+        case breastfeeding = "母乳（瓶喂）"
         case formula = "奶粉"
         case mixed = "混合"
+
+        var needsDuration: Bool {
+            self == .directBreastfeeding || self == .mixed
+        }
+        var needsAmount: Bool {
+            self == .breastfeeding || self == .formula || self == .mixed
+        }
     }
 }
 
@@ -98,15 +109,6 @@ struct SleepPayload: Codable {
         case fair = "一般"
         case poor = "差"
     }
-}
-
-// MARK: - Diaper (Excretion)
-struct DiaperPayload: Codable {
-    var count: Int = 1
-    var color: String = ""
-    var consistency: String = ""
-    var hasBloodOrMucus: Bool = false
-    var isAbnormal: Bool = false
 }
 
 // MARK: - Diaper Change

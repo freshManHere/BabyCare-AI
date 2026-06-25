@@ -5,10 +5,20 @@ extension BabyEvent {
         switch payload {
         case .feeding(let p):
             let method = p.method.rawValue
-            if let amount = p.amountMl {
-                return "\(method) · \(amount)ml"
+            switch p.method {
+            case .directBreastfeeding:
+                if let d = p.durationMinutes { return "\(method) · \(d)分钟" }
+                let parts = [p.leftBreastMinutes.map { "左\($0)m" }, p.rightBreastMinutes.map { "右\($0)m" }].compactMap { $0 }
+                return "\(method)\(parts.isEmpty ? "" : " · " + parts.joined(separator: "/"))"
+            case .mixed:
+                var parts: [String] = []
+                if let d = p.durationMinutes { parts.append("亲喂\(d)m") }
+                if let a = p.amountMl { parts.append("补\(a)ml") }
+                return "\(method) · \(parts.joined(separator: " + "))"
+            default:
+                if let amount = p.amountMl { return "\(method) · \(amount)ml" }
+                return method
             }
-            return method
         case .sleep(let p):
             if let end = endTime {
                 let minutes = Int(end.timeIntervalSince(startTime) / 60)
@@ -18,8 +28,6 @@ extension BabyEvent {
                 return "\(p.sleepType.rawValue) · \(duration)"
             }
             return p.sleepType.rawValue + " · 进行中"
-        case .diaper(let p):
-            return "排便\(p.count)次\(p.hasBloodOrMucus ? " · ⚠️有血丝" : "")"
         case .diaperChange(let p):
             return "\(p.reason.rawValue) · \(p.urineAmount.rawValue)"
         case .outing(let p):
