@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SleepFormView: View {
     @EnvironmentObject private var appState: AppState
+    let existingEvent: BabyEvent?
     let onSave: (BabyEvent) -> Void
 
     @State private var startTime = Date()
@@ -11,6 +12,22 @@ struct SleepFormView: View {
     @State private var soothingMethod = ""
     @State private var quality: SleepPayload.SleepQuality = .good
     @State private var note = ""
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        // Pre-fill from existing event if editing
+        if let event = existingEvent,
+           case .sleep(let p) = event.payload {
+            _startTime = State(initialValue: event.startTime)
+            _endTime = State(initialValue: event.endTime ?? Date())
+            _hasEndTime = State(initialValue: event.endTime != nil)
+            _sleepType = State(initialValue: p.sleepType)
+            _soothingMethod = State(initialValue: p.soothingMethod)
+            _quality = State(initialValue: p.quality)
+            _note = State(initialValue: event.note)
+        }
+    }
 
     var body: some View {
         Form {
@@ -58,7 +75,7 @@ struct SleepFormView: View {
     private func save() {
         guard let baby = appState.currentBaby else { return }
         let payload = SleepPayload(sleepType: sleepType, soothingMethod: soothingMethod, quality: quality)
-        let event = BabyEvent(
+        var event = BabyEvent(
             babyId: baby.id,
             label: .sleep,
             startTime: startTime,
@@ -66,6 +83,11 @@ struct SleepFormView: View {
             note: note,
             payload: .sleep(payload)
         )
+        // Preserve original ID if editing
+        if let existing = existingEvent {
+            event.id = existing.id
+            event.createdAt = existing.createdAt
+        }
         onSave(event)
     }
 }
