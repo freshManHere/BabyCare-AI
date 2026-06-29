@@ -171,6 +171,13 @@ struct RecordsView: View {
                                 .padding(.vertical, 6)
                         }
                         .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                store.delete(event)
+                            } label: {
+                                Label("删除", systemImage: "trash")
+                            }
+                        }
                         Divider().padding(.leading, 72)
                     }
                 }

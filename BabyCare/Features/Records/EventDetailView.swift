@@ -7,6 +7,7 @@ struct EventDetailView: View {
     @State private var store = EventStore.shared
     @State private var showingEdit = false
     @State private var showingWakeConfirm = false
+    @State private var showingDeleteConfirm = false
 
     private var isSleepInProgress: Bool {
         event.label == .sleep && event.endTime == nil
@@ -82,10 +83,18 @@ struct EventDetailView: View {
                     Button("完成") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingEdit = true
-                    } label: {
-                        Image(systemName: "pencil")
+                    HStack(spacing: 16) {
+                        Button {
+                            showingEdit = true
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            showingDeleteConfirm = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
                     }
                 }
             }
@@ -103,6 +112,18 @@ struct EventDetailView: View {
                     store.update(updated)
                     dismiss()
                 }
+            }
+            .confirmationDialog(
+                "删除这条记录？",
+                isPresented: $showingDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("删除", role: .destructive) {
+                    store.delete(event)
+                    dismiss()
+                }
+            } message: {
+                Text("此操作不可撤销。")
             }
         }
     }
