@@ -58,19 +58,29 @@ struct HomeView: View {
 
     private var babyHeaderContent: some View {
         HStack(spacing: 14) {
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.pink.opacity(0.3), Color.purple.opacity(0.2)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 64, height: 64)
-                .overlay {
-                    Text(baby?.gender == .female ? "👧" : "👶")
-                        .font(.system(size: 32))
+            Group {
+                if let data = baby?.avatarData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 64, height: 64)
+                        .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.pink.opacity(0.3), Color.purple.opacity(0.2)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+                        .overlay {
+                            Text(baby?.gender == .female ? "👧" : "👶")
+                                .font(.system(size: 32))
+                        }
                 }
-                .shadow(color: .pink.opacity(0.15), radius: 6, y: 2)
+            }
+            .shadow(color: .pink.opacity(0.15), radius: 6, y: 2)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(baby?.nickname ?? "点击设置宝宝信息")
