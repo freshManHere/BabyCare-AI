@@ -5,6 +5,7 @@ struct HomeView: View {
     @State private var store = EventStore.shared
     @State private var quickAddLabel: EventLabel?
     @State private var showingSummary = false
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     private var baby: Baby? { appState.currentBaby }
     private var todayEvents: [BabyEvent] {
@@ -127,7 +128,7 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: hSizeClass == .regular ? 4 : 2), spacing: 10) {
                 ForEach(EventLabel.allCases.filter { $0 != .other }) { label in
                     overviewCard(for: label)
                         .onTapGesture {
@@ -206,7 +207,7 @@ struct HomeView: View {
             Text("快速记录")
                 .font(.headline)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 14) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: hSizeClass == .regular ? 8 : 4), spacing: 14) {
                 ForEach(EventLabel.allCases) { label in
                     QuickActionButton(label: label) {
                         quickAddLabel = label

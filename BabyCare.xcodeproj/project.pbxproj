@@ -77,7 +77,7 @@
 		708A66E2E9BDAB2C4CC110C6 /* Baby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Baby.swift; sourceTree = "<group>"; };
 		71793978546A35135BF3CC9F /* BathFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BathFormView.swift; sourceTree = "<group>"; };
 		7A8C2484A9C7FF13E3822EA3 /* AddGrowthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddGrowthView.swift; sourceTree = "<group>"; };
-		7FE79334BAEEF57502637ED3 /* BabyCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BabyCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7FE79334BAEEF57502637ED3 /* BabyCare.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BabyCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		909FDF2CC59E4F67602A5208 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		916F95E9E54A243A0CF8F3A9 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		9173B587F57ABC2D42F49D42 /* GrowthRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthRecord.swift; sourceTree = "<group>"; };
@@ -330,6 +330,9 @@
 						DevelopmentTeam = "";
 						TestTargetID = 99CC990D3CA49CC51AC4F4C7;
 					};
+					99CC990D3CA49CC51AC4F4C7 = {
+						DevelopmentTeam = "";
+					};
 				};
 			};
 			buildConfigurationList = 9E7173690A2BCE40AB0CF5D7 /* Build configuration list for PBXProject "BabyCare" */;
@@ -469,15 +472,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 3C3Z68HJVQ;
 				INFOPLIST_FILE = BabyCare/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app.csh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -502,15 +504,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 3C3Z68HJVQ;
 				INFOPLIST_FILE = BabyCare/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app.csh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
