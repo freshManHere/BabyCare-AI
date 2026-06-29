@@ -140,11 +140,8 @@ struct LabelTrendChartView: View {
     }
 
     private var xAxisFormat: Date.FormatStyle {
-        if timeRange == .today {
-            // Feeding daily trend should reflect real feeding timestamps.
-            return label == .feeding ? .dateTime.hour().minute() : .dateTime.hour()
-        }
-        return .dateTime.month(.abbreviated).day()
+        // Today dimension always shows time (HH:mm); other ranges show date.
+        return timeRange == .today ? .dateTime.hour().minute() : .dateTime.month(.abbreviated).day()
     }
 
     private var yAxisLabel: String {
@@ -161,8 +158,8 @@ struct LabelTrendChartView: View {
         let cal = Calendar.current
         let isToday = timeRange == .today
 
-        if isToday && label == .feeding {
-            // For daily feeding trend, each record is plotted at its actual feeding time.
+        if isToday {
+            // Today: plot every event at its actual timestamp so the x-axis shows real times.
             return events
                 .sorted { $0.startTime < $1.startTime }
                 .map { event in
@@ -172,22 +169,6 @@ struct LabelTrendChartView: View {
                         isHighRisk: isHighRiskEvent(event)
                     )
                 }
-        }
-
-        if isToday {
-            // Group by hour
-            var buckets: [Int: (value: Double, highRisk: Bool)] = [:]
-            for event in events {
-                let hour = cal.component(.hour, from: event.startTime)
-                let val = metricValue(event)
-                let hr = isHighRiskEvent(event)
-                buckets[hour, default: (0, false)].value += val
-                if hr { buckets[hour]?.highRisk = true }
-            }
-            return buckets.sorted { $0.key < $1.key }.map { (hour, data) in
-                let date = cal.date(bySettingHour: hour, minute: 0, second: 0, of: start)!
-                return TrendDataPoint(date: date, value: data.value, isHighRisk: data.highRisk)
-            }
         } else {
             // Group by day
             var buckets: [Date: (value: Double, highRisk: Bool)] = [:]
