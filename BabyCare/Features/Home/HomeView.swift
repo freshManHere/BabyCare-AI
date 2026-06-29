@@ -3,7 +3,6 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
     @State private var store = EventStore.shared
-    @State private var showingAddRecord = false
     @State private var quickAddLabel: EventLabel?
     @State private var showingSummary = false
 
@@ -35,8 +34,8 @@ struct HomeView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showingAddRecord) {
-                AddRecordView(preselectedLabel: quickAddLabel)
+            .sheet(item: $quickAddLabel) { label in
+                AddRecordView(preselectedLabel: label)
                     .environmentObject(appState)
             }
             .sheet(isPresented: $showingSummary) {
@@ -201,7 +200,6 @@ struct HomeView: View {
                 ForEach(EventLabel.allCases) { label in
                     QuickActionButton(label: label) {
                         quickAddLabel = label
-                        showingAddRecord = true
                     }
                 }
             }
