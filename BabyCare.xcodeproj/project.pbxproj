@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1BD7A37E697BEB73B7A98AD5 /* GrowthChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9663A5C5354F6EC50643CE5F /* GrowthChartView.swift */; };
 		2E83B277C353ACF653F703E7 /* BabyCareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14743D382A9E6F74A230B57 /* BabyCareTests.swift */; };
 		314EF1F0F6285A8E3AADCA16 /* BabyEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33024359A593C9E105B4DD9 /* BabyEvent.swift */; };
 		3437EB2F85D8343B45E99F3D /* Baby.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708A66E2E9BDAB2C4CC110C6 /* Baby.swift */; };
@@ -14,10 +15,12 @@
 		3DCE3296918B9E6DEE9D520F /* GenericFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F8661BAFF00517C2AFBA63 /* GenericFormView.swift */; };
 		5043823BDF5678E87A265C4E /* BathFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71793978546A35135BF3CC9F /* BathFormView.swift */; };
 		541E94E3AC55E094C28C35C7 /* MineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FCCD5ABF5B6B7A514827FCD /* MineView.swift */; };
+		55F8CB07FE69B335781CA8CC /* GrowthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 327E8BCC234E94A39E6356A2 /* GrowthStore.swift */; };
 		5C565A8354E7EAA993EF9DD0 /* BabyCareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3ECEC8965820E190D04FCE6 /* BabyCareApp.swift */; };
 		61490F9FCDB890728F2F1EE4 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909FDF2CC59E4F67602A5208 /* AppState.swift */; };
 		635C22263A4D53C44E88F9EF /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C1CCC9703B2BB23890AA90A /* EventDetailView.swift */; };
 		6403C7B167FE7A7EDD859679 /* LabelTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79055C31D0D6AB73D32C4C1 /* LabelTrendChartView.swift */; };
+		66BB23E0D121393D9ADC00F2 /* AddGrowthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C2484A9C7FF13E3822EA3 /* AddGrowthView.swift */; };
 		6F0D9037063CB17091E429B1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 534823EB750255EC3F94E02E /* ContentView.swift */; };
 		71F541D2B4A14A3F0F01BC4D /* DiaperChangeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2AA26C63DBB40D084C68FC /* DiaperChangeFormView.swift */; };
 		73D58A3B17A831A15AF9A849 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58440CF0379D51198CE669A6 /* AssistantView.swift */; };
@@ -25,6 +28,7 @@
 		7D4121E11CBC6CBBDA9CE3A2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916F95E9E54A243A0CF8F3A9 /* HomeView.swift */; };
 		88E16775844D43A73F9B9C30 /* SleepFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231A1DFB3E0F7F79D96F0F14 /* SleepFormView.swift */; };
 		905E958F1FC1DE320269B0B7 /* FeedingFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BEE949A97806BDDCDB49293 /* FeedingFormView.swift */; };
+		A0FA382DBC0CA91CD039E534 /* GrowthRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9173B587F57ABC2D42F49D42 /* GrowthRecord.swift */; };
 		A6E745FFCC8BADA5AC54D62D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BEB68AFB041031B472FA497F /* Assets.xcassets */; };
 		B909F83B1479DC312E7116C2 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1946DB917830C587EF123C7F /* AddRecordView.swift */; };
 		C0506683E71D66FBDF63D655 /* BabyCareUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F708B100A76B0A3C7762E0B7 /* BabyCareUITests.swift */; };
@@ -62,6 +66,7 @@
 		231A1DFB3E0F7F79D96F0F14 /* SleepFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepFormView.swift; sourceTree = "<group>"; };
 		2CE33B43CA7338CB7A128D64 /* DailySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailySummaryView.swift; sourceTree = "<group>"; };
 		2FCCD5ABF5B6B7A514827FCD /* MineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MineView.swift; sourceTree = "<group>"; };
+		327E8BCC234E94A39E6356A2 /* GrowthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthStore.swift; sourceTree = "<group>"; };
 		37F8661BAFF00517C2AFBA63 /* GenericFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericFormView.swift; sourceTree = "<group>"; };
 		4436D3F4EB26989F0161A5E4 /* BabyCareUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BabyCareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		48C0D0776E81F02BA11FF33C /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
@@ -71,9 +76,12 @@
 		5C1CCC9703B2BB23890AA90A /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
 		708A66E2E9BDAB2C4CC110C6 /* Baby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Baby.swift; sourceTree = "<group>"; };
 		71793978546A35135BF3CC9F /* BathFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BathFormView.swift; sourceTree = "<group>"; };
-		7FE79334BAEEF57502637ED3 /* BabyCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BabyCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A8C2484A9C7FF13E3822EA3 /* AddGrowthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddGrowthView.swift; sourceTree = "<group>"; };
+		7FE79334BAEEF57502637ED3 /* BabyCare.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BabyCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		909FDF2CC59E4F67602A5208 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		916F95E9E54A243A0CF8F3A9 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		9173B587F57ABC2D42F49D42 /* GrowthRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthRecord.swift; sourceTree = "<group>"; };
+		9663A5C5354F6EC50643CE5F /* GrowthChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthChartView.swift; sourceTree = "<group>"; };
 		A14743D382A9E6F74A230B57 /* BabyCareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabyCareTests.swift; sourceTree = "<group>"; };
 		A1613D62C95D56E06C6BE148 /* EventStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStore.swift; sourceTree = "<group>"; };
 		AB2AA26C63DBB40D084C68FC /* DiaperChangeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaperChangeFormView.swift; sourceTree = "<group>"; };
@@ -138,6 +146,7 @@
 			isa = PBXGroup;
 			children = (
 				A1613D62C95D56E06C6BE148 /* EventStore.swift */,
+				327E8BCC234E94A39E6356A2 /* GrowthStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -147,6 +156,7 @@
 			children = (
 				708A66E2E9BDAB2C4CC110C6 /* Baby.swift */,
 				C33024359A593C9E105B4DD9 /* BabyEvent.swift */,
+				9173B587F57ABC2D42F49D42 /* GrowthRecord.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -219,6 +229,8 @@
 		D8012DEE6957BE8848249FB3 /* Mine */ = {
 			isa = PBXGroup;
 			children = (
+				7A8C2484A9C7FF13E3822EA3 /* AddGrowthView.swift */,
+				9663A5C5354F6EC50643CE5F /* GrowthChartView.swift */,
 				2FCCD5ABF5B6B7A514827FCD /* MineView.swift */,
 			);
 			path = Mine;
@@ -318,6 +330,9 @@
 						DevelopmentTeam = "";
 						TestTargetID = 99CC990D3CA49CC51AC4F4C7;
 					};
+					99CC990D3CA49CC51AC4F4C7 = {
+						DevelopmentTeam = "";
+					};
 				};
 			};
 			buildConfigurationList = 9E7173690A2BCE40AB0CF5D7 /* Build configuration list for PBXProject "BabyCare" */;
@@ -365,6 +380,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				66BB23E0D121393D9ADC00F2 /* AddGrowthView.swift in Sources */,
 				B909F83B1479DC312E7116C2 /* AddRecordView.swift in Sources */,
 				61490F9FCDB890728F2F1EE4 /* AppState.swift in Sources */,
 				73D58A3B17A831A15AF9A849 /* AssistantView.swift in Sources */,
@@ -380,6 +396,9 @@
 				FA5131493589EAD93C82D5F3 /* EventStore.swift in Sources */,
 				905E958F1FC1DE320269B0B7 /* FeedingFormView.swift in Sources */,
 				3DCE3296918B9E6DEE9D520F /* GenericFormView.swift in Sources */,
+				1BD7A37E697BEB73B7A98AD5 /* GrowthChartView.swift in Sources */,
+				A0FA382DBC0CA91CD039E534 /* GrowthRecord.swift in Sources */,
+				55F8CB07FE69B335781CA8CC /* GrowthStore.swift in Sources */,
 				7D4121E11CBC6CBBDA9CE3A2 /* HomeView.swift in Sources */,
 				6403C7B167FE7A7EDD859679 /* LabelTrendChartView.swift in Sources */,
 				541E94E3AC55E094C28C35C7 /* MineView.swift in Sources */,
@@ -453,13 +472,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 3C3Z68HJVQ;
 				INFOPLIST_FILE = BabyCare/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app.csh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -486,13 +504,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 3C3Z68HJVQ;
 				INFOPLIST_FILE = BabyCare/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app.csh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.babycare.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};

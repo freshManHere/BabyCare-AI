@@ -16,6 +16,13 @@ struct MineView: View {
 
                 Section("功能") {
                     NavigationLink {
+                        GrowthChartView()
+                            .environmentObject(appState)
+                    } label: {
+                        Label("生长记录", systemImage: "chart.line.uptrend.xyaxis")
+                    }
+
+                    NavigationLink {
                         ReminderSettingsView()
                     } label: {
                         Label("提醒设置", systemImage: "bell.fill")
