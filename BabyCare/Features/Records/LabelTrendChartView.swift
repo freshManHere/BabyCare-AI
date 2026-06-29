@@ -140,7 +140,11 @@ struct LabelTrendChartView: View {
     }
 
     private var xAxisFormat: Date.FormatStyle {
-        timeRange == .today ? .dateTime.hour() : .dateTime.month(.abbreviated).day()
+        if timeRange == .today {
+            // Feeding daily trend should reflect real feeding timestamps.
+            return label == .feeding ? .dateTime.hour().minute() : .dateTime.hour()
+        }
+        return .dateTime.month(.abbreviated).day()
     }
 
     private var yAxisLabel: String {
@@ -156,6 +160,19 @@ struct LabelTrendChartView: View {
     private func aggregated(events: [BabyEvent], start: Date, end: Date) -> [TrendDataPoint] {
         let cal = Calendar.current
         let isToday = timeRange == .today
+
+        if isToday && label == .feeding {
+            // For daily feeding trend, each record is plotted at its actual feeding time.
+            return events
+                .sorted { $0.startTime < $1.startTime }
+                .map { event in
+                    TrendDataPoint(
+                        date: event.startTime,
+                        value: metricValue(event),
+                        isHighRisk: isHighRiskEvent(event)
+                    )
+                }
+        }
 
         if isToday {
             // Group by hour
