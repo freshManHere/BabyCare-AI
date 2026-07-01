@@ -4,14 +4,40 @@ struct FeedingFormView: View {
     @EnvironmentObject private var appState: AppState
     let onSave: (BabyEvent) -> Void
 
-    @State private var time = Date()
-    @State private var method: FeedingPayload.FeedingMethod = .directBreastfeeding
-    @State private var amountText = ""
-    @State private var leftBreastText = ""
-    @State private var rightBreastText = ""
-    @State private var wasBurped = false
-    @State private var hadSpitUp = false
-    @State private var note = ""
+    @State private var time: Date
+    @State private var method: FeedingPayload.FeedingMethod
+    @State private var amountText: String
+    @State private var leftBreastText: String
+    @State private var rightBreastText: String
+    @State private var wasBurped: Bool
+    @State private var hadSpitUp: Bool
+    @State private var note: String
+
+    private let existingEvent: BabyEvent?
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        if let event = existingEvent, case .feeding(let p) = event.payload {
+            _time = State(initialValue: event.startTime)
+            _method = State(initialValue: p.method)
+            _amountText = State(initialValue: p.amountMl.map { String($0) } ?? "")
+            _leftBreastText = State(initialValue: p.leftBreastMinutes.map { String($0) } ?? "")
+            _rightBreastText = State(initialValue: p.rightBreastMinutes.map { String($0) } ?? "")
+            _wasBurped = State(initialValue: p.wasBurped)
+            _hadSpitUp = State(initialValue: p.hadSpitUp)
+            _note = State(initialValue: event.note)
+        } else {
+            _time = State(initialValue: Date())
+            _method = State(initialValue: .directBreastfeeding)
+            _amountText = State(initialValue: "")
+            _leftBreastText = State(initialValue: "")
+            _rightBreastText = State(initialValue: "")
+            _wasBurped = State(initialValue: false)
+            _hadSpitUp = State(initialValue: false)
+            _note = State(initialValue: "")
+        }
+    }
 
     var body: some View {
         Form {
@@ -96,13 +122,21 @@ struct FeedingFormView: View {
             wasBurped: wasBurped,
             hadSpitUp: hadSpitUp
         )
-        let event = BabyEvent(
-            babyId: baby.id,
-            label: .feeding,
-            startTime: time,
-            note: note,
-            payload: .feeding(payload)
-        )
-        onSave(event)
+        if var updated = existingEvent {
+            updated.startTime = time
+            updated.note = note
+            updated.payload = .feeding(payload)
+            onSave(updated)
+        } else {
+            let event = BabyEvent(
+                babyId: baby.id,
+                label: .feeding,
+                startTime: time,
+                note: note,
+                payload: .feeding(payload)
+            )
+            onSave(event)
+        }
     }
 }
+

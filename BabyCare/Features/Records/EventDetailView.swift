@@ -146,6 +146,22 @@ struct EventDetailView: View {
                     }
                 }
             }
+        } else if event.label == .feeding {
+            NavigationStack {
+                FeedingFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑喂养记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
         } else {
             // Generic edit: for now just show a read-only note about future support
             NavigationStack {

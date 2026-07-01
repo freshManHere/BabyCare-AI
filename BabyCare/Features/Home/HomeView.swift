@@ -159,11 +159,30 @@ struct HomeView: View {
                 let mins = store.totalSleepMinutes(babyId: baby.id)
                 let h = mins / 60; let m = mins % 60
                 let sleepText = mins > 0 ? (h > 0 ? "\(h)h\(m > 0 ? "\(m)m" : "")" : "\(m)m") : "—"
+                // Bug #44: show time since last sleep ended, not total sleep duration
+                let lastWakeTime = labelEvents.first(where: { $0.endTime != nil })?.endTime
                 OverviewCard(
                     label: label,
                     primaryStat: sleepText,
-                    secondaryStat: count > 0 ? "共\(count)次" : "暂无记录",
-                    lastTime: lastTime
+                    secondaryStat: lastWakeTime != nil ? "上次睡醒" : (count > 0 ? "进行中" : "暂无记录"),
+                    lastTime: lastWakeTime
+                )
+            } else if label == .outing || label == .motorSkill {
+                // Bug #41: show duration of last event instead of "距今多久"
+                let lastDuration: String = {
+                    if let lastEvent = labelEvents.first, let end = lastEvent.endTime {
+                        let mins = Int(end.timeIntervalSince(lastEvent.startTime) / 60)
+                        let h = mins / 60; let m = mins % 60
+                        return h > 0 ? "\(h)h\(m > 0 ? "\(m)m" : "")" : "\(m > 0 ? "\(m)分钟" : "< 1分钟")"
+                    } else {
+                        return count > 0 ? "进行中" : "暂无记录"
+                    }
+                }()
+                OverviewCard(
+                    label: label,
+                    primaryStat: count > 0 ? "\(count)次" : "—",
+                    secondaryStat: lastDuration,
+                    lastTime: nil
                 )
             } else {
                 OverviewCard(

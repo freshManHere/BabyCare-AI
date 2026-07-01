@@ -149,7 +149,8 @@ struct LabelTrendChartView: View {
         case .feeding: return "奶量(ml) / 次"
         case .sleep: return "时长(分钟)"
         case .diaperChange: return "次数"
-        case .outing, .bath, .motorSkill, .symptom, .other: return "次数"
+        case .outing, .bath, .motorSkill: return "时长(分钟)"
+        case .symptom, .other: return "次数"
         }
     }
 
@@ -195,7 +196,11 @@ struct LabelTrendChartView: View {
         case .feeding(let p):
             // Show ml if available, else count as 1
             return Double(p.amountMl ?? (p.durationMinutes ?? 1))
-        case .sleep(let p):
+        case .sleep:
+            guard let end = event.endTime else { return 0 }
+            return Double(Int(end.timeIntervalSince(event.startTime) / 60))
+        case .outing, .bath, .motorSkill:
+            // Bug #42: show duration in minutes instead of count
             guard let end = event.endTime else { return 0 }
             return Double(Int(end.timeIntervalSince(event.startTime) / 60))
         default:
