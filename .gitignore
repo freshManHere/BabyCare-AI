@@ -2,6 +2,9 @@
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
+# Secret keys — never commit this file
+BabyCare/App/Secrets.swift
+
 ## User settings
 xcuserdata/
 

@@ -23,6 +23,12 @@ struct MineView: View {
                     }
 
                     NavigationLink {
+                        AISettingsView()
+                    } label: {
+                        Label("AI 助手设置", systemImage: "cpu")
+                    }
+
+                    NavigationLink {
                         ReminderSettingsView()
                     } label: {
                         Label("提醒设置", systemImage: "bell.fill")
