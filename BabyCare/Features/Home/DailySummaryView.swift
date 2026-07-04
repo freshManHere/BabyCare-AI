@@ -119,10 +119,13 @@ struct DailySummaryView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         } else {
-            let totalMl = store.totalFeedingAmountMl(babyId: baby!.id)
+            let summary = store.feedingSummary(babyId: baby!.id)
             SummaryStatRow(label: "喂养次数", value: "\(feedingEvents.count) 次")
-            if totalMl > 0 {
-                SummaryStatRow(label: "总奶量", value: "\(totalMl) ml")
+            if summary.hasBottle {
+                SummaryStatRow(label: "瓶喂总量", value: "\(summary.bottleMl) ml")
+            }
+            if summary.hasBreast {
+                SummaryStatRow(label: "亲喂时长", value: "\(summary.breastMinutes) 分钟")
             }
             if let first = feedingEvents.last, let last = feedingEvents.first {
                 SummaryStatRow(

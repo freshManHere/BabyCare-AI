@@ -39,8 +39,8 @@ struct DiaperChangeFormView: View {
             }
 
             Section("皮肤状况") {
-                Toggle("是否有便便", isOn: $hadPoop)
-                Toggle("是否有尿布疹", isOn: $hasDiaperRash)
+              DismissingToggle(title: "是否有便便", isOn: $hadPoop)
+              DismissingToggle(title: "是否有尿布疹", isOn: $hasDiaperRash)
                 if hasDiaperRash {
                     TextField("皮肤状态备注", text: $skinNote)
                 }

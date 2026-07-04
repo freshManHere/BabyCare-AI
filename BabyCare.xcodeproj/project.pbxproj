@@ -25,6 +25,7 @@
 		71F541D2B4A14A3F0F01BC4D /* DiaperChangeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2AA26C63DBB40D084C68FC /* DiaperChangeFormView.swift */; };
 		73D58A3B17A831A15AF9A849 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58440CF0379D51198CE669A6 /* AssistantView.swift */; };
 		7B9EEB5C758E4CAD441AB7D3 /* SelectChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A2A70D5CEE0648E64A2F6C2 /* SelectChip.swift */; };
+		A1B2C3D4E5F6A1B2C3D4E5F6 /* DismissingToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B1C2D3E4F5A6 /* DismissingToggle.swift */; };
 		7D4121E11CBC6CBBDA9CE3A2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916F95E9E54A243A0CF8F3A9 /* HomeView.swift */; };
 		88E16775844D43A73F9B9C30 /* SleepFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231A1DFB3E0F7F79D96F0F14 /* SleepFormView.swift */; };
 		905E958F1FC1DE320269B0B7 /* FeedingFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BEE949A97806BDDCDB49293 /* FeedingFormView.swift */; };
@@ -59,6 +60,7 @@
 
 /* Begin PBXFileReference section */
 		0A2A70D5CEE0648E64A2F6C2 /* SelectChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectChip.swift; sourceTree = "<group>"; };
+		B1C2D3E4F5A6B1C2D3E4F5A6 /* DismissingToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DismissingToggle.swift; sourceTree = "<group>"; };
 		1946DB917830C587EF123C7F /* AddRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRecordView.swift; sourceTree = "<group>"; };
 		1BEE949A97806BDDCDB49293 /* FeedingFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedingFormView.swift; sourceTree = "<group>"; };
 		1D980752BD6CC3C5208A4A40 /* MotorSkillFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotorSkillFormView.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				0A2A70D5CEE0648E64A2F6C2 /* SelectChip.swift */,
+				B1C2D3E4F5A6B1C2D3E4F5A6 /* DismissingToggle.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -403,6 +406,7 @@
 				F038DC30167F04B01F1702AF /* OutingFormView.swift in Sources */,
 				3A166F0083DC6F13CF00EF9C /* RecordsView.swift in Sources */,
 				7B9EEB5C758E4CAD441AB7D3 /* SelectChip.swift in Sources */,
+				A1B2C3D4E5F6A1B2C3D4E5F6 /* DismissingToggle.swift in Sources */,
 				88E16775844D43A73F9B9C30 /* SleepFormView.swift in Sources */,
 				DD2E490201DA8B9EE20B2E3F /* SymptomFormView.swift in Sources */,
 			);

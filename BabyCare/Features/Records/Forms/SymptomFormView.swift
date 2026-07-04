@@ -102,7 +102,7 @@ struct SymptomFormView: View {
             }
 
             Section {
-                Toggle("症状持续中", isOn: $isContinuous)
+              DismissingToggle(title: "症状持续中", isOn: $isContinuous)
             }
 
             Section("备注") {

@@ -148,11 +148,11 @@ struct HomeView: View {
             let lastTime = labelEvents.first?.startTime
 
             if label == .feeding {
-                let total = store.totalFeedingAmountMl(babyId: baby.id)
+                let summary = store.feedingSummary(babyId: baby.id)
                 OverviewCard(
                     label: label,
                     primaryStat: count > 0 ? "\(count)次" : "—",
-                    secondaryStat: total > 0 ? "共\(total)ml" : (count > 0 ? "母乳" : "暂无记录"),
+                    secondaryStat: count > 0 ? summary.secondaryStat : "暂无记录",
                     lastTime: lastTime
                 )
             } else if label == .sleep {
@@ -168,12 +168,15 @@ struct HomeView: View {
                     lastTime: lastWakeTime
                 )
             } else if label == .outing || label == .motorSkill {
-                // Bug #41: show duration of last event instead of "距今多久"
-                let lastDuration: String = {
-                    if let lastEvent = labelEvents.first, let end = lastEvent.endTime {
-                        let mins = Int(end.timeIntervalSince(lastEvent.startTime) / 60)
-                        let h = mins / 60; let m = mins % 60
-                        return h > 0 ? "\(h)h\(m > 0 ? "\(m)m" : "")" : "\(m > 0 ? "\(m)分钟" : "< 1分钟")"
+                // Bug #47/#48: show total duration of all today's events
+                let totalDuration: String = {
+                    let totalMins = labelEvents.reduce(0) { sum, event -> Int in
+                        guard let end = event.endTime else { return sum }
+                        return sum + Int(end.timeIntervalSince(event.startTime) / 60)
+                    }
+                    if totalMins > 0 {
+                        let h = totalMins / 60; let m = totalMins % 60
+                        return "共" + (h > 0 ? "\(h)h\(m > 0 ? "\(m)m" : "")" : "\(m)分钟")
                     } else {
                         return count > 0 ? "进行中" : "暂无记录"
                     }
@@ -181,7 +184,7 @@ struct HomeView: View {
                 OverviewCard(
                     label: label,
                     primaryStat: count > 0 ? "\(count)次" : "—",
-                    secondaryStat: lastDuration,
+                    secondaryStat: totalDuration,
                     lastTime: nil
                 )
             } else {

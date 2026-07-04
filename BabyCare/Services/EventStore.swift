@@ -116,6 +116,45 @@ final class EventStore {
         }
     }
 
+    // MARK: - Feeding summary (distinguishes bottle ml from breastfeeding minutes)
+    struct FeedingSummary {
+        /// Total ml from bottle-fed sessions (母乳瓶喂 / 奶粉 / 混合瓶补)
+        let bottleMl: Int
+        /// Total direct breastfeeding minutes (亲喂 + 混合亲喂部分)
+        let breastMinutes: Int
+        /// Total number of feeding sessions
+        let count: Int
+
+        var hasBottle: Bool { bottleMl > 0 }
+        var hasBreast: Bool { breastMinutes > 0 }
+
+        /// Human-readable secondary stat for display cards
+        var secondaryStat: String {
+            switch (hasBottle, hasBreast) {
+            case (true, true):
+                return "瓶\(bottleMl)ml · 亲\(breastMinutes)min"
+            case (true, false):
+                return "共\(bottleMl)ml"
+            case (false, true):
+                return "亲喂\(breastMinutes)min"
+            case (false, false):
+                return count > 0 ? "母乳" : "暂无记录"
+            }
+        }
+    }
+
+    func feedingSummary(babyId: UUID) -> FeedingSummary {
+        let feedEvents = events(for: .feeding, babyId: babyId)
+        var bottleMl = 0
+        var breastMinutes = 0
+        for event in feedEvents {
+            guard case .feeding(let p) = event.payload else { continue }
+            bottleMl += p.amountMl ?? 0
+            breastMinutes += p.durationMinutes ?? 0
+        }
+        return FeedingSummary(bottleMl: bottleMl, breastMinutes: breastMinutes, count: feedEvents.count)
+    }
+
     // MARK: - Alerts
     struct Alert: Identifiable {
         let id = UUID()

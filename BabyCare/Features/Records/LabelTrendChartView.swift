@@ -8,6 +8,23 @@ enum TrendTimeRange: String, CaseIterable, Identifiable {
     case month = "近1月"
     case custom = "自定义"
     var id: String { rawValue }
+
+    /// Date range used to filter the records list below the chart.
+    var listDateRange: (start: Date, end: Date) {
+        let now = Date()
+        let cal = Calendar.current
+        switch self {
+        case .today:
+            return (cal.startOfDay(for: now), now)
+        case .week:
+            return (cal.date(byAdding: .day, value: -6, to: cal.startOfDay(for: now))!, now)
+        case .month:
+            return (cal.date(byAdding: .day, value: -29, to: cal.startOfDay(for: now))!, now)
+        case .custom:
+            // custom range is handled inside the chart view; fall back to week for the list
+            return (cal.date(byAdding: .day, value: -6, to: cal.startOfDay(for: now))!, now)
+        }
+    }
 }
 
 // MARK: - Chart Data Point
@@ -18,16 +35,29 @@ struct TrendDataPoint: Identifiable {
     let isHighRisk: Bool
 }
 
+// MARK: - Feeding Metric
+enum FeedingMetric: String, CaseIterable, Identifiable {
+    case bottle = "奶量(ml)"
+    case breast = "亲嗂(min)"
+    var id: String { rawValue }
+}
+
 // MARK: - Trend Chart View
 struct LabelTrendChartView: View {
     @EnvironmentObject private var appState: AppState
     @State private var store = EventStore.shared
-    @State private var timeRange: TrendTimeRange = .week
+    @Binding var timeRange: TrendTimeRange
+    @State private var feedingMetric: FeedingMetric = .bottle
     @State private var customStart: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
     @State private var customEnd: Date = Date()
     @State private var showCustomPicker = false
 
     let label: EventLabel
+
+    init(label: EventLabel, timeRange: Binding<TrendTimeRange>) {
+        self.label = label
+        self._timeRange = timeRange
+    }
 
     private var dateRange: (start: Date, end: Date) {
         let now = Date()
@@ -58,6 +88,16 @@ struct LabelTrendChartView: View {
                 Picker("时间范围", selection: $timeRange) {
                     ForEach(TrendTimeRange.allCases) { range in
                         Text(range.rawValue).tag(range)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            // Feeding metric picker (only for feeding label)
+            if label == .feeding {
+                Picker("指标", selection: $feedingMetric) {
+                    ForEach(FeedingMetric.allCases) { metric in
+                        Text(metric.rawValue).tag(metric)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -146,7 +186,7 @@ struct LabelTrendChartView: View {
 
     private var yAxisLabel: String {
         switch label {
-        case .feeding: return "奶量(ml) / 次"
+        case .feeding: return feedingMetric == .bottle ? "奶量(ml)·次" : "亲嗂时长(min)·次"
         case .sleep: return "时长(分钟)"
         case .diaperChange: return "次数"
         case .outing, .bath, .motorSkill: return "时长(分钟)"
@@ -194,8 +234,13 @@ struct LabelTrendChartView: View {
     private func metricValue(_ event: BabyEvent) -> Double {
         switch event.payload {
         case .feeding(let p):
-            // Show ml if available, else count as 1
-            return Double(p.amountMl ?? (p.durationMinutes ?? 1))
+            if feedingMetric == .breast {
+                // Breast minutes: durationMinutes for 亲喂 and mixed
+                return Double(p.durationMinutes ?? 0)
+            } else {
+                // Bottle ml: amountMl for 瓶喂/奶粉/mixed; 0 for pure 亲喂
+                return Double(p.amountMl ?? 0)
+            }
         case .sleep:
             guard let end = event.endTime else { return 0 }
             return Double(Int(end.timeIntervalSince(event.startTime) / 60))

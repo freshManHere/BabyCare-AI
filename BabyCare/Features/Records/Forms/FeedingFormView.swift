@@ -90,8 +90,8 @@ struct FeedingFormView: View {
             }
 
             Section("其他") {
-                Toggle("是否拍嗝", isOn: $wasBurped)
-                Toggle("是否吐奶", isOn: $hadSpitUp)
+              DismissingToggle(title: "是否拍嗝", isOn: $wasBurped)
+              DismissingToggle(title: "是否吐奶", isOn: $hadSpitUp)
             }
 
             Section("备注") {

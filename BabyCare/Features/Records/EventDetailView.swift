@@ -162,6 +162,38 @@ struct EventDetailView: View {
                     }
                 }
             }
+        } else if event.label == .motorSkill {
+            NavigationStack {
+                MotorSkillFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑大运动记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
+        } else if event.label == .outing {
+            NavigationStack {
+                OutingFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑外出记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
         } else {
             // Generic edit: for now just show a read-only note about future support
             NavigationStack {

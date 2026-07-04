@@ -33,7 +33,7 @@ struct SleepFormView: View {
         Form {
             Section {
                 DatePicker("开始时间", selection: $startTime, displayedComponents: [.date, .hourAndMinute])
-                Toggle("已结束", isOn: $hasEndTime)
+              DismissingToggle(title: "已结束", isOn: $hasEndTime)
                 if hasEndTime {
                     DatePicker("结束时间", selection: $endTime, in: startTime..., displayedComponents: [.date, .hourAndMinute])
                 }

@@ -40,8 +40,8 @@ struct BathFormView: View {
             }
 
             Section("护理") {
-                Toggle("是否洗头", isOn: $washedHair)
-                Toggle("使用了护肤品", isOn: $usedSkincare)
+              DismissingToggle(title: "是否洗头", isOn: $washedHair)
+              DismissingToggle(title: "使用了护肤品", isOn: $usedSkincare)
             }
 
             Section("洗后状态") {

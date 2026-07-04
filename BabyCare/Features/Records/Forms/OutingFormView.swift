@@ -4,13 +4,37 @@ struct OutingFormView: View {
     @EnvironmentObject private var appState: AppState
     let onSave: (BabyEvent) -> Void
 
-    @State private var departureTime = Date()
-    @State private var returnTime = Date()
-    @State private var hasReturnTime = false
-    @State private var destination = ""
-    @State private var transportation: OutingPayload.Transportation = .stroller
-    @State private var afterFeeding = false
-    @State private var note = ""
+    @State private var departureTime: Date
+    @State private var returnTime: Date
+    @State private var hasReturnTime: Bool
+    @State private var destination: String
+    @State private var transportation: OutingPayload.Transportation
+    @State private var afterFeeding: Bool
+    @State private var note: String
+
+    private let existingEvent: BabyEvent?
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        if let event = existingEvent, case .outing(let p) = event.payload {
+            _departureTime = State(initialValue: event.startTime)
+            _hasReturnTime = State(initialValue: event.endTime != nil)
+            _returnTime = State(initialValue: event.endTime ?? Date())
+            _destination = State(initialValue: p.destination)
+            _transportation = State(initialValue: p.transportation)
+            _afterFeeding = State(initialValue: p.afterFeeding)
+            _note = State(initialValue: event.note)
+        } else {
+            _departureTime = State(initialValue: Date())
+            _returnTime = State(initialValue: Date())
+            _hasReturnTime = State(initialValue: false)
+            _destination = State(initialValue: "")
+            _transportation = State(initialValue: .stroller)
+            _afterFeeding = State(initialValue: false)
+            _note = State(initialValue: "")
+        }
+    }
 
     var duration: String {
         guard hasReturnTime else { return "" }
@@ -23,7 +47,7 @@ struct OutingFormView: View {
         Form {
             Section {
                 DatePicker("出门时间", selection: $departureTime, displayedComponents: [.date, .hourAndMinute])
-                Toggle("已返回", isOn: $hasReturnTime)
+              DismissingToggle(title: "已返回", isOn: $hasReturnTime)
                 if hasReturnTime {
                     DatePicker("返回时间", selection: $returnTime, in: departureTime..., displayedComponents: [.date, .hourAndMinute])
                     if !duration.isEmpty {
@@ -47,7 +71,7 @@ struct OutingFormView: View {
             }
 
             Section {
-                Toggle("喂奶后外出", isOn: $afterFeeding)
+              DismissingToggle(title: "喂奶后外出", isOn: $afterFeeding)
             }
 
             Section("备注") {
@@ -64,12 +88,20 @@ struct OutingFormView: View {
     private func save() {
         guard let baby = appState.currentBaby else { return }
         let payload = OutingPayload(destination: destination, transportation: transportation, afterFeeding: afterFeeding)
-        onSave(BabyEvent(
-            babyId: baby.id, label: .outing,
-            startTime: departureTime,
-            endTime: hasReturnTime ? returnTime : nil,
-            note: note,
-            payload: .outing(payload)
-        ))
+        if var updated = existingEvent {
+            updated.startTime = departureTime
+            updated.endTime = hasReturnTime ? returnTime : nil
+            updated.note = note
+            updated.payload = .outing(payload)
+            onSave(updated)
+        } else {
+            onSave(BabyEvent(
+                babyId: baby.id, label: .outing,
+                startTime: departureTime,
+                endTime: hasReturnTime ? returnTime : nil,
+                note: note,
+                payload: .outing(payload)
+            ))
+        }
     }
 }

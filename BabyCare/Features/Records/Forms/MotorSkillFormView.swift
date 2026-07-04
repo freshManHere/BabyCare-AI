@@ -4,15 +4,43 @@ struct MotorSkillFormView: View {
     @EnvironmentObject private var appState: AppState
     let onSave: (BabyEvent) -> Void
 
-    @State private var time = Date()
-    @State private var selectedActions: Set<MotorSkillPayload.ActionType> = []
-    @State private var succeeded = true
-    @State private var note = ""
+    @State private var time: Date
+    @State private var hasEndTime: Bool
+    @State private var endTime: Date
+    @State private var selectedActions: Set<MotorSkillPayload.ActionType>
+    @State private var succeeded: Bool
+    @State private var note: String
+
+    private let existingEvent: BabyEvent?
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        if let event = existingEvent, case .motorSkill(let p) = event.payload {
+            _time = State(initialValue: event.startTime)
+            _hasEndTime = State(initialValue: event.endTime != nil)
+            _endTime = State(initialValue: event.endTime ?? Date())
+            _selectedActions = State(initialValue: Set(p.actionTypes))
+            _succeeded = State(initialValue: p.succeeded)
+            _note = State(initialValue: event.note)
+        } else {
+            _time = State(initialValue: Date())
+            _hasEndTime = State(initialValue: false)
+            _endTime = State(initialValue: Date())
+            _selectedActions = State(initialValue: [])
+            _succeeded = State(initialValue: true)
+            _note = State(initialValue: "")
+        }
+    }
 
     var body: some View {
         Form {
             Section {
-                DatePicker("记录时间", selection: $time, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("开始时间", selection: $time, displayedComponents: [.date, .hourAndMinute])
+              DismissingToggle(title: "已结束", isOn: $hasEndTime)
+                if hasEndTime {
+                    DatePicker("结束时间", selection: $endTime, in: time..., displayedComponents: [.date, .hourAndMinute])
+                }
             }
 
             Section("动作类型（可多选）") {
@@ -41,7 +69,7 @@ struct MotorSkillFormView: View {
             }
 
             Section {
-                Toggle("是否成功完成", isOn: $succeeded)
+              DismissingToggle(title: "是否成功完成", isOn: $succeeded)
             }
 
             Section("观察备注") {
@@ -58,6 +86,16 @@ struct MotorSkillFormView: View {
     private func save() {
         guard let baby = appState.currentBaby else { return }
         let payload = MotorSkillPayload(actionTypes: Array(selectedActions), succeeded: succeeded)
-        onSave(BabyEvent(babyId: baby.id, label: .motorSkill, startTime: time, note: note, payload: .motorSkill(payload)))
+        if var updated = existingEvent {
+            updated.startTime = time
+            updated.endTime = hasEndTime ? endTime : nil
+            updated.note = note
+            updated.payload = .motorSkill(payload)
+            onSave(updated)
+        } else {
+            var event = BabyEvent(babyId: baby.id, label: .motorSkill, startTime: time, note: note, payload: .motorSkill(payload))
+            event.endTime = hasEndTime ? endTime : nil
+            onSave(event)
+        }
     }
 }
