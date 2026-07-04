@@ -56,9 +56,10 @@ struct AssistantView: View {
                     ForEach(messages) { message in
                         VStack(spacing: 4) {
                             ChatBubble(message: message)
-                            if message.role == .assistant {
+                            // Only show banner for high-risk responses
+                            if message.role == .assistant, !message.text.isEmpty {
                                 let risk = RiskDetector.detect(in: message.text)
-                                if risk != .none {
+                                if risk == .high {
                                     RiskBannerView(level: risk)
                                         .padding(.leading, 40)
                                 }

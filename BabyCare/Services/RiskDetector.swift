@@ -11,9 +11,8 @@ enum RiskDetector {
         "生命危险", "危及生命"
     ]
     private static let mediumRiskKeywords = [
-        "建议就医", "看医生", "去医院", "及时就诊", "发烧超过",
-        "持续高烧", "需要就医", "尽快就医", "及时就医", "医院检查",
-        "就医处理", "前往医院"
+        "尽快就医", "立刻就医", "马上就医", "紧急就医",
+        "高烧不退", "反复抽搐", "持续惊厥"
     ]
 
     static func detect(in text: String) -> RiskLevel {
