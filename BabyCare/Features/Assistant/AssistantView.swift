@@ -2,13 +2,10 @@ import SwiftUI
 
 struct AssistantView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var store = EventStore.shared
     @State private var inputText = ""
-    @State private var messages: [ChatMessage] = [
-        ChatMessage(role: .assistant, text: "你好！我是 BabyCare AI 助手 👶\n\n你可以问我关于宝宝喂养、睡眠、症状等任何问题，我会尽力帮助你。")
-    ]
-    @State private var isLoading = false
     @State private var showAPIKeyAlert = false
+
+    private var viewModel: AssistantViewModel { appState.assistantViewModel }
 
     private let quickQuestions = [
         "宝宝一直哭怎么办",
@@ -53,7 +50,7 @@ struct AssistantView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(messages) { message in
+                    ForEach(viewModel.messages) { message in
                         VStack(spacing: 4) {
                             ChatBubble(message: message)
                             // Only show banner for high-risk responses
@@ -67,7 +64,7 @@ struct AssistantView: View {
                         }
                         .id(message.id)
                     }
-                    if isLoading {
+                    if viewModel.isLoading {
                         HStack {
                             TypingIndicator()
                             Spacer()
@@ -79,16 +76,16 @@ struct AssistantView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .onChange(of: messages.count) { _, _ in
+            .onChange(of: viewModel.messages.count) { _, _ in
                 withAnimation {
-                    if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
+                    if let last = viewModel.messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
                 }
             }
-            .onChange(of: isLoading) { _, loading in
+            .onChange(of: viewModel.isLoading) { _, loading in
                 if loading { withAnimation { proxy.scrollTo("loading", anchor: .bottom) } }
             }
-            .onChange(of: messages.last?.text) { _, _ in
-                if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
+            .onChange(of: viewModel.messages.last?.text) { _, _ in
+                if let last = viewModel.messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
             }
         }
     }
@@ -132,7 +129,7 @@ struct AssistantView: View {
                     .font(.title2)
                     .foregroundStyle(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.pink)
             }
-            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -143,53 +140,12 @@ struct AssistantView: View {
     private func sendMessage(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-
         guard AIConfig.hasAPIKey else {
             showAPIKeyAlert = true
             return
         }
-
-        messages.append(ChatMessage(role: .user, text: trimmed))
         inputText = ""
-        isLoading = true
-
-        // System prompt with today's real baby data
-        let systemPrompt = AssistantContextBuilder.buildSystemPrompt(
-            baby: appState.currentBaby, store: store
-        )
-        var glmMessages: [GLMMessage] = [
-            GLMMessage(role: "system", content: systemPrompt)
-        ]
-        // Include last 10 turns as conversation history
-        glmMessages += messages.suffix(10).map {
-            GLMMessage(role: $0.role == .user ? "user" : "assistant", content: $0.text)
-        }
-
-        // Append empty placeholder; streaming will fill it in
-        let placeholder = ChatMessage(role: .assistant, text: "")
-        messages.append(placeholder)
-        let msgId = placeholder.id
-
-        GLMClient.shared.streamChat(
-            messages: glmMessages,
-            onDelta: { delta in
-                if let idx = self.messages.firstIndex(where: { $0.id == msgId }) {
-                    self.messages[idx] = self.messages[idx].appending(delta)
-                }
-            },
-            onComplete: {
-                self.isLoading = false
-            },
-            onError: { error in
-                if let idx = self.messages.firstIndex(where: { $0.id == msgId }) {
-                    self.messages[idx] = ChatMessage(
-                        role: .assistant,
-                        text: "⚠️ \(error.localizedDescription ?? "请求失败，请重试")"
-                    )
-                }
-                self.isLoading = false
-            }
-        )
+        viewModel.sendMessage(trimmed, baby: appState.currentBaby)
     }
 }
 

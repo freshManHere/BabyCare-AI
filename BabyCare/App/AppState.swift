@@ -18,6 +18,9 @@ final class AppState: ObservableObject {
     /// Set by HomeView when tapping an overview card; consumed by RecordsView
     @Published var pendingRecordsFilter: EventLabel? = nil
 
+    /// Persists chat history across tab switches
+    let assistantViewModel = AssistantViewModel()
+
     private static let babyKey = "saved_baby_v1"
 
     init() {

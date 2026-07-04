@@ -25,6 +25,7 @@
 		6F0D9037063CB17091E429B1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 534823EB750255EC3F94E02E /* ContentView.swift */; };
 		71F541D2B4A14A3F0F01BC4D /* DiaperChangeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2AA26C63DBB40D084C68FC /* DiaperChangeFormView.swift */; };
 		73D58A3B17A831A15AF9A849 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58440CF0379D51198CE669A6 /* AssistantView.swift */; };
+		EE0001FF0001EE0001FF0001 /* AssistantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0001AA0001FF0001AA0001 /* AssistantViewModel.swift */; };
 		7B9EEB5C758E4CAD441AB7D3 /* SelectChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A2A70D5CEE0648E64A2F6C2 /* SelectChip.swift */; };
 		A1B2C3D4E5F6A1B2C3D4E5F6 /* DismissingToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B1C2D3E4F5A6 /* DismissingToggle.swift */; };
 		7D4121E11CBC6CBBDA9CE3A2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916F95E9E54A243A0CF8F3A9 /* HomeView.swift */; };
@@ -82,6 +83,7 @@
 		534823EB750255EC3F94E02E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		53F6269629B95AA0951335CC /* EventExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventExtensions.swift; sourceTree = "<group>"; };
 		58440CF0379D51198CE669A6 /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
+		FF0001AA0001FF0001AA0001 /* AssistantViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantViewModel.swift; sourceTree = "<group>"; };
 		5C1CCC9703B2BB23890AA90A /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
 		708A66E2E9BDAB2C4CC110C6 /* Baby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Baby.swift; sourceTree = "<group>"; };
 		71793978546A35135BF3CC9F /* BathFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BathFormView.swift; sourceTree = "<group>"; };
@@ -244,6 +246,7 @@
 			isa = PBXGroup;
 			children = (
 				58440CF0379D51198CE669A6 /* AssistantView.swift */,
+				FF0001AA0001FF0001AA0001 /* AssistantViewModel.swift */,
 			);
 			path = Assistant;
 			sourceTree = "<group>";
@@ -405,6 +408,7 @@
 				B909F83B1479DC312E7116C2 /* AddRecordView.swift in Sources */,
 				61490F9FCDB890728F2F1EE4 /* AppState.swift in Sources */,
 				73D58A3B17A831A15AF9A849 /* AssistantView.swift in Sources */,
+				EE0001FF0001EE0001FF0001 /* AssistantViewModel.swift in Sources */,
 				3437EB2F85D8343B45E99F3D /* Baby.swift in Sources */,
 				5C565A8354E7EAA993EF9DD0 /* BabyCareApp.swift in Sources */,
 				CC0001DD0001CC0001DD0001 /* Secrets.swift in Sources */,
