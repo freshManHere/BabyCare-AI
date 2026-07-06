@@ -13,6 +13,54 @@ struct Baby: Identifiable, Codable {
         case female = "女宝"
     }
 
+    // MARK: - Custom Codable to handle server's date-only "birthday" field
+    enum CodingKeys: String, CodingKey {
+        case id, name, nickname, birthday, gender
+        // avatarData is local-only, never sent to/received from server
+    }
+
+    init(id: UUID = UUID(), name: String, nickname: String, birthday: Date, gender: Gender, avatarData: Data? = nil) {
+        self.id = id
+        self.name = name
+        self.nickname = nickname
+        self.birthday = birthday
+        self.gender = gender
+        self.avatarData = avatarData
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id       = try container.decodeIfPresent(UUID.self,   forKey: .id)       ?? UUID()
+        name     = try container.decode(String.self,          forKey: .name)
+        nickname = try container.decode(String.self,          forKey: .nickname)
+        gender   = try container.decode(Gender.self,          forKey: .gender)
+        avatarData = nil  // never comes from server
+
+        // Server sends date-only string "YYYY-MM-DD"; try ISO8601 first then date-only
+        if let date = try? container.decode(Date.self, forKey: .birthday) {
+            birthday = date
+        } else {
+            let str = try container.decode(String.self, forKey: .birthday)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.timeZone = TimeZone(identifier: "UTC")
+            birthday = formatter.date(from: str) ?? Date()
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id,       forKey: .id)
+        try container.encode(name,     forKey: .name)
+        try container.encode(nickname, forKey: .nickname)
+        try container.encode(gender,   forKey: .gender)
+        // Encode birthday as date-only string for the backend
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        try container.encode(formatter.string(from: birthday), forKey: .birthday)
+    }
+
     var ageInMonths: Int {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.month], from: birthday, to: Date())

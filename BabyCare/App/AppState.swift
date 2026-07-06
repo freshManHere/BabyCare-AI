@@ -53,8 +53,25 @@ final class AppState: ObservableObject {
     func didSignIn() {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
-        // Immediately pull data on sign-in so the new device is up to date
-        Task { await SyncManager.shared.pullUpdates() }
+        // On a new device currentBaby is nil — fetch baby profile from server first,
+        // then pull events/growth so the new device is fully synced.
+        Task {
+            await fetchBabyFromServerIfNeeded()
+            await SyncManager.shared.pullUpdates()
+        }
+    }
+
+    /// Fetches the first baby from the server and stores it locally if we have none.
+    func fetchBabyFromServerIfNeeded() async {
+        guard currentBaby == nil else { return }
+        do {
+            let babies: [Baby] = try await APIClient.shared.request("/babies")
+            if let first = babies.first {
+                currentBaby = first
+            }
+        } catch {
+            print("[AppState] fetchBabyFromServerIfNeeded failed: \(error)")
+        }
     }
 
     func skipAuth() {
