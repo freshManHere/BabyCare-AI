@@ -1,3 +1,35 @@
-node_modules/
+# ── Xcode ──────────────────────────────────────────
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Swift Package Manager ──────────────────────────
+.build/
+Packages/
+Package.resolved
+
+# ── CocoaPods ─────────────────────────────────────
+Pods/
+
+# ── Secrets (never commit) ────────────────────────
+BabyCare/App/Secrets.swift
 .env
+
+# ── macOS ──────────────────────────────────────────
+.DS_Store
+*.swp
+
+# ── Backend files (belong in BabyCare-Server repo) ─
+node_modules/
+package.json
+package-lock.json
 *.log
+src/
+api-test.http
+.env.example
