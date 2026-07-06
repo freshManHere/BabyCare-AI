@@ -28,10 +28,12 @@ final class GrowthStore {
             if let h = record.heightCm { updated.heightCm = h }
             if let w = record.weightKg { updated.weightKg = w }
             records[idx] = updated
+            SyncManager.shared.enqueueGrowthRecord(updated)
         } else {
             var new = record
             new.date = day
             records.append(new)
+            SyncManager.shared.enqueueGrowthRecord(new)
         }
         save()
     }
@@ -39,6 +41,7 @@ final class GrowthStore {
     func delete(_ record: GrowthRecord) {
         records.removeAll { $0.id == record.id }
         save()
+        SyncManager.shared.enqueueDeleteGrowthRecord(babyId: record.babyId, recordId: record.id)
     }
 
     // MARK: - Query

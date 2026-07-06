@@ -64,6 +64,12 @@ final class SyncManager {
         Task { await drainQueue() }
     }
 
+    func enqueueDeleteGrowthRecord(babyId: UUID, recordId: UUID) {
+        let data = (try? JSONEncoder().encode(recordId)) ?? Data()
+        pendingQueue.append(PendingItem(id: UUID(), operation: .deleteGrowth, payload: data, babyId: babyId))
+        Task { await drainQueue() }
+    }
+
     // MARK: - Drain (push pending items to backend)
     func drainQueue() async {
         guard !isSyncing, !pendingQueue.isEmpty, APIClient.shared.isAuthenticated else { return }

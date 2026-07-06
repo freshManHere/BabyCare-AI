@@ -23,11 +23,13 @@ final class EventStore {
         events.append(event)
         events.sort { $0.startTime > $1.startTime }
         save()
+        SyncManager.shared.enqueueEvent(event)
     }
 
     func delete(_ event: BabyEvent) {
         events.removeAll { $0.id == event.id }
         save()
+        SyncManager.shared.enqueueDeleteEvent(babyId: event.babyId, eventId: event.id)
     }
 
     func update(_ event: BabyEvent) {
@@ -35,6 +37,7 @@ final class EventStore {
             events[index] = event
             events.sort { $0.startTime > $1.startTime }
             save()
+            SyncManager.shared.enqueueEvent(event)
         }
     }
 
