@@ -3,13 +3,15 @@ import UIKit
 
 // MARK: - Offline Sync Manager
 // - Writes go local first, then are queued for remote push.
-// - On foreground / network restore, drains the queue.
-// - Incremental pull: fetches events updated since last sync time.
+// - On foreground, drains outgoing queue AND pulls incremental updates from server.
 
 @MainActor
 @Observable
 final class SyncManager {
     static let shared = SyncManager()
+
+    /// Injected by AppState after init so pullUpdates can read the current baby
+    weak var appState: AppState?
     private init() {
         loadQueue()          // ← Restore persisted queue on launch
         observeForeground()
@@ -123,11 +125,14 @@ final class SyncManager {
     }
 
     // MARK: - Incremental pull
-    func pullUpdates(babyId: UUID) async {
-        guard APIClient.shared.isAuthenticated else { return }
+    /// Pulls new/updated events and growth records from server since last sync.
+    /// Reads babyId from appState — no-ops if not authenticated or no baby set.
+    func pullUpdates() async {
+        guard APIClient.shared.isAuthenticated,
+              let babyId = appState?.currentBaby?.id else { return }
         let sync: any SyncService = RemoteSyncService()
 
-        // Pull events independently — update its own timestamp on success
+        // Pull events independently
         do {
             let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
             let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
@@ -154,6 +159,29 @@ final class SyncManager {
         } catch { /* silent fail — retry next foreground */ }
     }
 
+    /// Legacy overload kept for call sites that pass babyId explicitly
+    func pullUpdates(babyId: UUID) async {
+        guard APIClient.shared.isAuthenticated else { return }
+        let sync: any SyncService = RemoteSyncService()
+        do {
+            let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
+            let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
+            let eventStore = EventStore.shared
+            for event in updatedEvents {
+                if event.deletedAt != nil { eventStore.delete(event) }
+                else { eventStore.upsert(event) }
+            }
+            lastSyncDateEvents = Date()
+        } catch {}
+        do {
+            let since = lastSyncDateGrowth ?? Date(timeIntervalSince1970: 0)
+            let updatedGrowth = try await sync.syncGrowthRecords(babyId: babyId, since: since)
+            let growthStore = GrowthStore.shared
+            for record in updatedGrowth { growthStore.upsert(record, syncOnly: true) }
+            lastSyncDateGrowth = Date()
+        } catch {}
+    }
+
     // MARK: - Foreground trigger
     private func observeForeground() {
         NotificationCenter.default.addObserver(
@@ -161,7 +189,8 @@ final class SyncManager {
             object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                await self?.drainQueue()
+                await self?.drainQueue()    // push pending local writes
+                await self?.pullUpdates()   // pull remote changes
             }
         }
     }

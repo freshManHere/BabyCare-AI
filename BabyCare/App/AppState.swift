@@ -33,6 +33,9 @@ final class AppState: ObservableObject {
         let skipped  = UserDefaults.standard.bool(forKey: Self.skippedAuthKey)
         isAuthenticated = hasToken || skipped
 
+        // Give SyncManager a reference so pullUpdates() can read currentBaby
+        SyncManager.shared.appState = self
+
         // Listen for sign-out events (401 from APIClient)
         signOutObserver = NotificationCenter.default.addObserver(
             forName: .userDidSignOut, object: nil, queue: .main
@@ -50,6 +53,8 @@ final class AppState: ObservableObject {
     func didSignIn() {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
+        // Immediately pull data on sign-in so the new device is up to date
+        Task { await SyncManager.shared.pullUpdates() }
     }
 
     func skipAuth() {
