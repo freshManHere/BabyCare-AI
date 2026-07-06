@@ -50,6 +50,8 @@ struct BabyEvent: Identifiable, Codable {
     var note: String = ""
     var payload: EventPayload
     var createdAt: Date = Date()
+    /// Set by the backend for soft-deleted events returned via /sync
+    var deletedAt: Date? = nil
 }
 
 // MARK: - Event Payload (Type-safe union)

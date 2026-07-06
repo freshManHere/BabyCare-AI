@@ -5,7 +5,9 @@ struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
-        if hSizeClass == .regular {
+        if !appState.isAuthenticated {
+            AuthView()
+        } else if hSizeClass == .regular {
             // iPad / landscape: sidebar navigation
             iPadLayout
         } else {

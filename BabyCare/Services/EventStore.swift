@@ -38,6 +38,17 @@ final class EventStore {
         }
     }
 
+    /// Insert or update an event by id (used for sync merges)
+    func upsert(_ event: BabyEvent) {
+        if let index = events.firstIndex(where: { $0.id == event.id }) {
+            events[index] = event
+        } else {
+            events.append(event)
+        }
+        events.sort { $0.startTime > $1.startTime }
+        save()
+    }
+
     func deleteAll() {
         events = []
         save()

@@ -7,8 +7,6 @@ enum AppTab: Hashable {
     case assistant
     case mine
 }
-
-// MARK: - App State
 @MainActor
 final class AppState: ObservableObject {
     @Published var selectedTab: AppTab = .home
@@ -21,10 +19,41 @@ final class AppState: ObservableObject {
     /// Persists chat history across tab switches
     let assistantViewModel = AssistantViewModel()
 
+    /// Auth state: nil = not decided yet, true = authenticated or skipped, false = needs login
+    @Published var isAuthenticated: Bool
+
     private static let babyKey = "saved_baby_v1"
+    private static let skippedAuthKey = "skipped_auth_v1"
 
     init() {
         currentBaby = Self.loadBaby()
+        // Authenticated if Keychain has a token, or user previously skipped auth
+        let hasToken = KeychainHelper.load(key: "access_token") != nil
+        let skipped  = UserDefaults.standard.bool(forKey: Self.skippedAuthKey)
+        isAuthenticated = hasToken || skipped
+
+        // Listen for sign-out events (401 from APIClient)
+        NotificationCenter.default.addObserver(
+            forName: .userDidSignOut, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.isAuthenticated = false }
+        }
+    }
+
+    func didSignIn() {
+        UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
+        isAuthenticated = true
+    }
+
+    func skipAuth() {
+        UserDefaults.standard.set(true, forKey: Self.skippedAuthKey)
+        isAuthenticated = true
+    }
+
+    func signOut() {
+        APIClient.shared.logout()
+        UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
+        isAuthenticated = false
     }
 
     func switchToTab(_ tab: AppTab) {

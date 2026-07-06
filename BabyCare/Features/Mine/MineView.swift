@@ -61,6 +61,16 @@ struct MineView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                if APIClient.shared.isAuthenticated {
+                    Section {
+                        Button(role: .destructive) {
+                            appState.signOut()
+                        } label: {
+                            Label("退出登录", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    }
+                }
             }
             .navigationTitle("我的")
             .navigationBarTitleDisplayMode(.large)
