@@ -25,7 +25,7 @@ final class AppState: ObservableObject {
     private static let babyKey = "saved_baby_v1"
     private static let skippedAuthKey = "skipped_auth_v1"
 
-    private var signOutObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var signOutObserver: NSObjectProtocol?
 
     init() {
         currentBaby = Self.loadBaby()
