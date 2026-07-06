@@ -28,7 +28,9 @@ final class APIClient {
         get { KeychainHelper.load(key: "access_token") }
         set {
             if let token = newValue {
-                try? KeychainHelper.save(token, key: "access_token")
+                if (try? KeychainHelper.save(token, key: "access_token")) == nil {
+                    print("[APIClient] ⚠️ Failed to save access_token to Keychain")
+                }
             } else {
                 KeychainHelper.delete(key: "access_token")
             }
@@ -38,7 +40,9 @@ final class APIClient {
         get { KeychainHelper.load(key: "refresh_token") }
         set {
             if let token = newValue {
-                try? KeychainHelper.save(token, key: "refresh_token")
+                if (try? KeychainHelper.save(token, key: "refresh_token")) == nil {
+                    print("[APIClient] ⚠️ Failed to save refresh_token to Keychain")
+                }
             } else {
                 KeychainHelper.delete(key: "refresh_token")
             }

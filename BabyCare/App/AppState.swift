@@ -25,18 +25,25 @@ final class AppState: ObservableObject {
     private static let babyKey = "saved_baby_v1"
     private static let skippedAuthKey = "skipped_auth_v1"
 
+    private var signOutObserver: NSObjectProtocol?
+
     init() {
         currentBaby = Self.loadBaby()
-        // Authenticated if Keychain has a token, or user previously skipped auth
         let hasToken = KeychainHelper.load(key: "access_token") != nil
         let skipped  = UserDefaults.standard.bool(forKey: Self.skippedAuthKey)
         isAuthenticated = hasToken || skipped
 
         // Listen for sign-out events (401 from APIClient)
-        NotificationCenter.default.addObserver(
+        signOutObserver = NotificationCenter.default.addObserver(
             forName: .userDidSignOut, object: nil, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.isAuthenticated = false }
+            self?.isAuthenticated = false
+        }
+    }
+
+    deinit {
+        if let obs = signOutObserver {
+            NotificationCenter.default.removeObserver(obs)
         }
     }
 

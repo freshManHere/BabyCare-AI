@@ -108,12 +108,13 @@ struct AuthView: View {
     private func submit() {
         let trimEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimPwd   = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimConfirm = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimEmail.isEmpty, !trimPwd.isEmpty else {
             errorMessage = "请填写邮箱和密码"
             return
         }
         if !isLogin {
-            guard trimPwd == confirmPassword else {
+            guard trimPwd == trimConfirm else {
                 errorMessage = "两次输入的密码不一致"
                 return
             }

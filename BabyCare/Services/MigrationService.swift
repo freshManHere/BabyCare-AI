@@ -44,7 +44,7 @@ final class MigrationService {
                 }
                 for (i, batch) in batches.enumerated() {
                     for event in batch {
-                        if let _ = baby { try await syncService.pushEvent(event) }
+                        try await syncService.pushEvent(event)
                     }
                     progress = 0.1 + 0.7 * Double(i + 1) / Double(batches.count)
                 }

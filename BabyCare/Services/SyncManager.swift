@@ -11,6 +11,7 @@ import UIKit
 final class SyncManager {
     static let shared = SyncManager()
     private init() {
+        loadQueue()          // ← Restore persisted queue on launch
         observeForeground()
     }
 
@@ -114,8 +115,8 @@ final class SyncManager {
                     store.upsert(event)
                 }
             }
-            lastSyncDate = Date()
-        } catch { /* silent fail — offline */ }
+            lastSyncDate = Date()   // Only update after successful sync
+        } catch { /* silent fail — will retry next foreground event */ }
     }
 
     // MARK: - Foreground trigger
