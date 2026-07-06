@@ -6,6 +6,13 @@ import UserNotifications
 struct MineView: View {
     @EnvironmentObject private var appState: AppState
     @State private var showingBabyProfile = false
+    @State private var showingMigration = false
+    @State private var showMigrationConfirm = false
+
+    private var localEventCount: Int { EventStore.shared.events.count }
+    private var showMigrationEntry: Bool {
+        APIClient.shared.isAuthenticated && MigrationService.needsMigration && localEventCount > 0
+    }
 
     var body: some View {
         NavigationStack {
@@ -39,6 +46,15 @@ struct MineView: View {
                             .environmentObject(appState)
                     } label: {
                         Label("数据导出", systemImage: "square.and.arrow.up")
+                    }
+
+                    if showMigrationEntry {
+                        Button {
+                            showMigrationConfirm = true
+                        } label: {
+                            Label("导入本地数据到服务端", systemImage: "icloud.and.arrow.up")
+                                .foregroundStyle(.pink)
+                        }
                     }
                 }
 
@@ -77,6 +93,20 @@ struct MineView: View {
             .sheet(isPresented: $showingBabyProfile) {
                 BabyProfileEditView()
                     .environmentObject(appState)
+            }
+            .sheet(isPresented: $showingMigration) {
+                DataMigrationView()
+                    .environmentObject(appState)
+            }
+            .confirmationDialog(
+                "将本地 \(localEventCount) 条记录同步到服务端",
+                isPresented: $showMigrationConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("开始同步") { showingMigration = true }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("数据将上传到你的账户，本地数据保留不删除。")
             }
         }
     }

@@ -5,11 +5,21 @@ import Foundation
 // Safe to call multiple times — a flag prevents re-migration.
 
 @MainActor
-final class MigrationService {
+final class MigrationService: ObservableObject {
 
     private static let migratedKey = "local_data_migrated_v1"
     static var needsMigration: Bool {
         !UserDefaults.standard.bool(forKey: migratedKey)
+    }
+
+    /// Total number of local records waiting to be migrated
+    var localDataCount: Int {
+        eventStore.events.count + growthStore.records.count
+    }
+
+    /// Allow user to re-trigger migration manually
+    func resetMigrationFlag() {
+        UserDefaults.standard.removeObject(forKey: Self.migratedKey)
     }
 
     private let syncService: any SyncService = RemoteSyncService()
