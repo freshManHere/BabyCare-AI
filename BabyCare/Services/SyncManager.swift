@@ -119,15 +119,24 @@ final class SyncManager {
         let since = lastSyncDate ?? Date(timeIntervalSince1970: 0)
         let sync: any SyncService = RemoteSyncService()
         do {
+            // Pull events (includes soft-deleted)
             let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
-            let store = EventStore.shared
+            let eventStore = EventStore.shared
             for event in updatedEvents {
                 if event.deletedAt != nil {
-                    store.delete(event)
+                    eventStore.delete(event)
                 } else {
-                    store.upsert(event)
+                    eventStore.upsert(event)
                 }
             }
+
+            // Pull growth records
+            let updatedGrowth = try await sync.syncGrowthRecords(babyId: babyId, since: since)
+            let growthStore = GrowthStore.shared
+            for record in updatedGrowth {
+                growthStore.upsert(record, syncOnly: true)
+            }
+
             lastSyncDate = Date()   // Only update after successful sync
         } catch { /* silent fail — will retry next foreground event */ }
     }

@@ -60,6 +60,11 @@ final class RemoteSyncService: SyncService {
         try await client.request("/babies/\(babyId)/growth")
     }
 
+    func syncGrowthRecords(babyId: UUID, since: Date) async throws -> [GrowthRecord] {
+        let fmt = ISO8601DateFormatter()
+        return try await client.request("/babies/\(babyId)/growth/sync?since=\(fmt.string(from: since))")
+    }
+
     func pushGrowthRecord(_ record: GrowthRecord) async throws {
         let _: GrowthRecord = try await client.request(
             "/babies/\(record.babyId)/growth", method: "POST", body: record

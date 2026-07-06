@@ -19,6 +19,7 @@ protocol SyncService {
 
     // MARK: Growth
     func fetchGrowthRecords(babyId: UUID) async throws -> [GrowthRecord]
+    func syncGrowthRecords(babyId: UUID, since: Date) async throws -> [GrowthRecord]
     func pushGrowthRecord(_ record: GrowthRecord) async throws
     func deleteGrowthRecord(babyId: UUID, id: UUID) async throws
 }
