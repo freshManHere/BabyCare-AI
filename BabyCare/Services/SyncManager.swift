@@ -16,9 +16,18 @@ final class SyncManager {
     }
 
     // MARK: - State
+    var lastSyncDateEvents: Date? {
+        get { UserDefaults.standard.object(forKey: "last_sync_date_events") as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: "last_sync_date_events") }
+    }
+    var lastSyncDateGrowth: Date? {
+        get { UserDefaults.standard.object(forKey: "last_sync_date_growth") as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: "last_sync_date_growth") }
+    }
+    /// Legacy key — kept for migration, not actively used
     var lastSyncDate: Date? {
-        get { UserDefaults.standard.object(forKey: "last_sync_date") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "last_sync_date") }
+        get { lastSyncDateEvents }
+        set { lastSyncDateEvents = newValue; lastSyncDateGrowth = newValue }
     }
     var isSyncing = false
     var pendingCount: Int { pendingQueue.count }
@@ -116,10 +125,11 @@ final class SyncManager {
     // MARK: - Incremental pull
     func pullUpdates(babyId: UUID) async {
         guard APIClient.shared.isAuthenticated else { return }
-        let since = lastSyncDate ?? Date(timeIntervalSince1970: 0)
         let sync: any SyncService = RemoteSyncService()
+
+        // Pull events independently — update its own timestamp on success
         do {
-            // Pull events (includes soft-deleted)
+            let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
             let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
             let eventStore = EventStore.shared
             for event in updatedEvents {
@@ -129,16 +139,19 @@ final class SyncManager {
                     eventStore.upsert(event)
                 }
             }
+            lastSyncDateEvents = Date()
+        } catch { /* silent fail — retry next foreground */ }
 
-            // Pull growth records
+        // Pull growth records independently
+        do {
+            let since = lastSyncDateGrowth ?? Date(timeIntervalSince1970: 0)
             let updatedGrowth = try await sync.syncGrowthRecords(babyId: babyId, since: since)
             let growthStore = GrowthStore.shared
             for record in updatedGrowth {
                 growthStore.upsert(record, syncOnly: true)
             }
-
-            lastSyncDate = Date()   // Only update after successful sync
-        } catch { /* silent fail — will retry next foreground event */ }
+            lastSyncDateGrowth = Date()
+        } catch { /* silent fail — retry next foreground */ }
     }
 
     // MARK: - Foreground trigger

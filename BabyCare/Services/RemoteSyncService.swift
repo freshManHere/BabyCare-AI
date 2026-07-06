@@ -29,18 +29,20 @@ final class RemoteSyncService: SyncService {
     // MARK: - Events
 
     func fetchEvents(babyId: UUID, from: Date?, to: Date?) async throws -> [BabyEvent] {
-        var path = "/babies/\(babyId)/events"
-        var params: [String] = []
+        var components = URLComponents(string: "/babies/\(babyId)/events")!
+        var items: [URLQueryItem] = []
         let fmt = ISO8601DateFormatter()
-        if let from { params.append("from=\(fmt.string(from: from))") }
-        if let to   { params.append("to=\(fmt.string(from: to))") }
-        if !params.isEmpty { path += "?" + params.joined(separator: "&") }
+        if let from { items.append(URLQueryItem(name: "from", value: fmt.string(from: from))) }
+        if let to   { items.append(URLQueryItem(name: "to",   value: fmt.string(from: to))) }
+        if !items.isEmpty { components.queryItems = items }
+        let path = components.url?.absoluteString ?? "/babies/\(babyId)/events"
         return try await client.request(path)
     }
 
     func syncEvents(babyId: UUID, since: Date) async throws -> [BabyEvent] {
-        let fmt = ISO8601DateFormatter()
-        let path = "/babies/\(babyId)/events/sync?since=\(fmt.string(from: since))"
+        var components = URLComponents(string: "/babies/\(babyId)/events/sync")!
+        components.queryItems = [URLQueryItem(name: "since", value: ISO8601DateFormatter().string(from: since))]
+        let path = components.url?.absoluteString ?? "/babies/\(babyId)/events/sync"
         return try await client.request(path)
     }
 
@@ -61,8 +63,10 @@ final class RemoteSyncService: SyncService {
     }
 
     func syncGrowthRecords(babyId: UUID, since: Date) async throws -> [GrowthRecord] {
-        let fmt = ISO8601DateFormatter()
-        return try await client.request("/babies/\(babyId)/growth/sync?since=\(fmt.string(from: since))")
+        var components = URLComponents(string: "/babies/\(babyId)/growth/sync")!
+        components.queryItems = [URLQueryItem(name: "since", value: ISO8601DateFormatter().string(from: since))]
+        let path = components.url?.absoluteString ?? "/babies/\(babyId)/growth/sync"
+        return try await client.request(path)
     }
 
     func pushGrowthRecord(_ record: GrowthRecord) async throws {
