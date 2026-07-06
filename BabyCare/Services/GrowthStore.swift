@@ -17,7 +17,8 @@ final class GrowthStore {
     private init() { load() }
 
     // MARK: - Upsert (same-day overwrite)
-    func upsert(_ record: GrowthRecord) {
+    /// syncOnly: true when called from server pull — skips enqueue to avoid re-push loop
+    func upsert(_ record: GrowthRecord, syncOnly: Bool = false) {
         let cal = Calendar.current
         let day = cal.startOfDay(for: record.date)
         if let idx = records.firstIndex(where: {
@@ -28,12 +29,12 @@ final class GrowthStore {
             if let h = record.heightCm { updated.heightCm = h }
             if let w = record.weightKg { updated.weightKg = w }
             records[idx] = updated
-            SyncManager.shared.enqueueGrowthRecord(updated)
+            if !syncOnly { SyncManager.shared.enqueueGrowthRecord(updated) }
         } else {
             var new = record
             new.date = day
             records.append(new)
-            SyncManager.shared.enqueueGrowthRecord(new)
+            if !syncOnly { SyncManager.shared.enqueueGrowthRecord(new) }
         }
         save()
     }

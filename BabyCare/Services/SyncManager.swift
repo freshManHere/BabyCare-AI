@@ -74,10 +74,15 @@ final class SyncManager {
     func drainQueue() async {
         guard !isSyncing, !pendingQueue.isEmpty, APIClient.shared.isAuthenticated else { return }
         isSyncing = true
+        defer { isSyncing = false }   // Guaranteed reset even on unexpected exit
+
         let sync: any SyncService = RemoteSyncService()
         var remaining: [PendingItem] = []
 
-        for item in pendingQueue {
+        // Snapshot the current queue; new items added during drain are handled in the retry below
+        let itemsToProcess = pendingQueue
+
+        for item in itemsToProcess {
             do {
                 switch item.operation {
                 case .pushEvent:
@@ -98,12 +103,14 @@ final class SyncManager {
                     }
                 }
             } catch {
-                // Keep failed items in queue for retry
                 remaining.append(item)
             }
         }
-        pendingQueue = remaining
-        isSyncing = false
+
+        // Keep items that failed + any newly enqueued during this drain
+        let processedIds = Set(itemsToProcess.map(\.id))
+        let newlyAdded = pendingQueue.filter { !processedIds.contains($0.id) }
+        pendingQueue = remaining + newlyAdded
     }
 
     // MARK: - Incremental pull
