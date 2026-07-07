@@ -113,10 +113,10 @@ enum EventPayload: Codable {
         switch self {
         case .feeding(let p):      try container.encode(AssocWrapper(p), forKey: .feeding)
         case .sleep(let p):        try container.encode(AssocWrapper(p), forKey: .sleep)
-        case .diaperChange(let p): try container.encode(AssocWrapper(p), forKey: .diaperChange)
+        case .diaperChange(let p): try container.encode(AssocWrapper(p), forKey: .diaper_change)
         case .outing(let p):       try container.encode(AssocWrapper(p), forKey: .outing)
         case .bath(let p):         try container.encode(AssocWrapper(p), forKey: .bath)
-        case .motorSkill(let p):   try container.encode(AssocWrapper(p), forKey: .motorSkill)
+        case .motorSkill(let p):   try container.encode(AssocWrapper(p), forKey: .motor_skill)
         case .symptom(let p):      try container.encode(AssocWrapper(p), forKey: .symptom)
         case .other(let s):        try container.encode(s, forKey: .other)
         }
