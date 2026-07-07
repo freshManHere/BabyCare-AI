@@ -19,8 +19,10 @@ final class AppState: ObservableObject {
     /// Persists chat history across tab switches
     let assistantViewModel = AssistantViewModel()
 
-    /// Auth state: nil = not decided yet, true = authenticated or skipped, false = needs login
+    /// Auth state
     @Published var isAuthenticated: Bool
+    /// True while the initial baby + events sync is running after sign-in
+    @Published var isSyncingAfterLogin = false
 
     private static let babyKey = "saved_baby_v1"
     private static let skippedAuthKey = "skipped_auth_v1"
@@ -61,14 +63,15 @@ final class AppState: ObservableObject {
     func didSignIn() {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
+        isSyncingAfterLogin = true
         Task {
-            // Set the userId in SyncManager so all subsequent keys are namespaced
             if let userId = decodeUserIdFromToken() {
                 SyncManager.shared.currentUserId = userId
                 SyncManager.shared.loadQueueForCurrentUser()
             }
             await syncCurrentBabyFromServer()
             await SyncManager.shared.pullUpdates()
+            isSyncingAfterLogin = false
         }
     }
 

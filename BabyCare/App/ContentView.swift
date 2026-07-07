@@ -7,6 +7,17 @@ struct ContentView: View {
     var body: some View {
         if !appState.isAuthenticated {
             AuthView()
+        } else if appState.isSyncingAfterLogin {
+            // Show loading while baby profile and events are being fetched
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                Text("正在同步数据…")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGroupedBackground))
         } else if hSizeClass == .regular {
             // iPad / landscape: sidebar navigation
             iPadLayout
