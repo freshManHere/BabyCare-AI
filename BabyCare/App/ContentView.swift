@@ -18,6 +18,37 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemGroupedBackground))
+        } else if appState.syncAfterLoginFailed {
+            // Sync failed (server unreachable, no network, etc.)
+            VStack(spacing: 20) {
+                Image(systemName: "wifi.slash")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.secondary)
+                Text("数据同步失败")
+                    .font(.title3.bold())
+                Text("请确认服务器正常运行后重试")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button {
+                    appState.retryInitialSync()
+                } label: {
+                    Label("重试", systemImage: "arrow.clockwise")
+                        .frame(minWidth: 120)
+                        .padding(.vertical, 10)
+                        .background(Color.pink)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                Button("暂不同步，离线使用") {
+                    appState.syncAfterLoginFailed = false
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+            .padding(32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGroupedBackground))
         } else if hSizeClass == .regular {
             // iPad / landscape: sidebar navigation
             iPadLayout

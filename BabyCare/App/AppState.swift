@@ -23,6 +23,8 @@ final class AppState: ObservableObject {
     @Published var isAuthenticated: Bool
     /// True while the initial baby + events sync is running after sign-in
     @Published var isSyncingAfterLogin = false
+    /// True if the initial sync failed (network error, server down, etc.)
+    @Published var syncAfterLoginFailed = false
 
     private static let babyKey = "saved_baby_v1"
     private static let skippedAuthKey = "skipped_auth_v1"
@@ -58,11 +60,7 @@ final class AppState: ObservableObject {
         // run the same sync flow as didSignIn() so data is recovered automatically.
         if hasToken && currentBaby == nil && !skipped {
             isSyncingAfterLogin = true
-            Task {
-                await syncCurrentBabyFromServer()
-                await SyncManager.shared.pullUpdates()
-                isSyncingAfterLogin = false
-            }
+            Task { await performInitialSync() }
         }
     }
 
@@ -76,15 +74,32 @@ final class AppState: ObservableObject {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
         isSyncingAfterLogin = true
-        Task {
-            if let userId = decodeUserIdFromToken() {
-                SyncManager.shared.currentUserId = userId
-                SyncManager.shared.loadQueueForCurrentUser()
-            }
-            await syncCurrentBabyFromServer()
-            await SyncManager.shared.pullUpdates()
-            isSyncingAfterLogin = false
+        syncAfterLoginFailed = false
+        if let userId = decodeUserIdFromToken() {
+            SyncManager.shared.currentUserId = userId
+            SyncManager.shared.loadQueueForCurrentUser()
         }
+        Task { await performInitialSync() }
+    }
+
+    /// Fetches baby profile + all events from server.
+    /// Sets syncAfterLoginFailed if baby fetch fails so UI can show a retry button.
+    func performInitialSync() async {
+        await syncCurrentBabyFromServer()
+        if currentBaby != nil {
+            await SyncManager.shared.pullUpdates()
+            syncAfterLoginFailed = false
+        } else {
+            // No baby fetched — could be network error or truly empty account
+            syncAfterLoginFailed = true
+        }
+        isSyncingAfterLogin = false
+    }
+
+    func retryInitialSync() {
+        syncAfterLoginFailed = false
+        isSyncingAfterLogin = true
+        Task { await performInitialSync() }
     }
 
     /// Extracts the userId claim from the JWT access token (no signature verification needed here).
