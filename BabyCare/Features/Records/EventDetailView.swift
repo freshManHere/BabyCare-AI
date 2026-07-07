@@ -194,6 +194,38 @@ struct EventDetailView: View {
                     }
                 }
             }
+        } else if event.label == .diaperChange {
+            NavigationStack {
+                DiaperChangeFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑换尿布记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
+        } else if event.label == .bath {
+            NavigationStack {
+                BathFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑洗澡记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
         } else {
             // Generic edit: for now just show a read-only note about future support
             NavigationStack {

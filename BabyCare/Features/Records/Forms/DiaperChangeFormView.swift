@@ -4,13 +4,37 @@ struct DiaperChangeFormView: View {
     @EnvironmentObject private var appState: AppState
     let onSave: (BabyEvent) -> Void
 
-    @State private var time = Date()
-    @State private var reason: DiaperChangePayload.ChangeReason = .wet
-    @State private var urineAmount: DiaperChangePayload.UrineAmount = .medium
-    @State private var hadPoop = false
-    @State private var hasDiaperRash = false
-    @State private var skinNote = ""
-    @State private var note = ""
+    @State private var time: Date
+    @State private var reason: DiaperChangePayload.ChangeReason
+    @State private var urineAmount: DiaperChangePayload.UrineAmount
+    @State private var hadPoop: Bool
+    @State private var hasDiaperRash: Bool
+    @State private var skinNote: String
+    @State private var note: String
+
+    private let existingEvent: BabyEvent?
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        if let event = existingEvent, case .diaperChange(let p) = event.payload {
+            _time         = State(initialValue: event.startTime)
+            _reason       = State(initialValue: p.reason)
+            _urineAmount  = State(initialValue: p.urineAmount)
+            _hadPoop      = State(initialValue: p.hadPoop)
+            _hasDiaperRash = State(initialValue: p.hasDiaperRash)
+            _skinNote     = State(initialValue: p.skinNote)
+            _note         = State(initialValue: event.note)
+        } else {
+            _time         = State(initialValue: Date())
+            _reason       = State(initialValue: .wet)
+            _urineAmount  = State(initialValue: .medium)
+            _hadPoop      = State(initialValue: false)
+            _hasDiaperRash = State(initialValue: false)
+            _skinNote     = State(initialValue: "")
+            _note         = State(initialValue: "")
+        }
+    }
 
     var body: some View {
         Form {
@@ -69,13 +93,20 @@ struct DiaperChangeFormView: View {
             hasDiaperRash: hasDiaperRash,
             skinNote: skinNote
         )
-        let event = BabyEvent(
-            babyId: baby.id,
-            label: .diaperChange,
-            startTime: time,
-            note: note,
-            payload: .diaperChange(payload)
-        )
-        onSave(event)
+        if var updated = existingEvent {
+            updated.startTime = time
+            updated.note = note
+            updated.payload = .diaperChange(payload)
+            onSave(updated)
+        } else {
+            let event = BabyEvent(
+                babyId: baby.id,
+                label: .diaperChange,
+                startTime: time,
+                note: note,
+                payload: .diaperChange(payload)
+            )
+            onSave(event)
+        }
     }
 }

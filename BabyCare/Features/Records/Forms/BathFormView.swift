@@ -4,13 +4,37 @@ struct BathFormView: View {
     @EnvironmentObject private var appState: AppState
     let onSave: (BabyEvent) -> Void
 
-    @State private var time = Date()
-    @State private var waterTempText = "37"
-    @State private var durationText = ""
-    @State private var washedHair = false
-    @State private var usedSkincare = false
-    @State private var afterCondition = ""
-    @State private var note = ""
+    @State private var time: Date
+    @State private var waterTempText: String
+    @State private var durationText: String
+    @State private var washedHair: Bool
+    @State private var usedSkincare: Bool
+    @State private var afterCondition: String
+    @State private var note: String
+
+    private let existingEvent: BabyEvent?
+
+    init(existingEvent: BabyEvent? = nil, onSave: @escaping (BabyEvent) -> Void) {
+        self.existingEvent = existingEvent
+        self.onSave = onSave
+        if let event = existingEvent, case .bath(let p) = event.payload {
+            _time           = State(initialValue: event.startTime)
+            _waterTempText  = State(initialValue: p.waterTempCelsius.map { String($0) } ?? "37")
+            _durationText   = State(initialValue: "")
+            _washedHair     = State(initialValue: p.washedHair)
+            _usedSkincare   = State(initialValue: p.usedSkincare)
+            _afterCondition = State(initialValue: p.afterCondition)
+            _note           = State(initialValue: event.note)
+        } else {
+            _time           = State(initialValue: Date())
+            _waterTempText  = State(initialValue: "37")
+            _durationText   = State(initialValue: "")
+            _washedHair     = State(initialValue: false)
+            _usedSkincare   = State(initialValue: false)
+            _afterCondition = State(initialValue: "")
+            _note           = State(initialValue: "")
+        }
+    }
 
     var body: some View {
         Form {
@@ -67,6 +91,13 @@ struct BathFormView: View {
             usedSkincare: usedSkincare,
             afterCondition: afterCondition
         )
-        onSave(BabyEvent(babyId: baby.id, label: .bath, startTime: time, note: note, payload: .bath(payload)))
+        if var updated = existingEvent {
+            updated.startTime = time
+            updated.note = note
+            updated.payload = .bath(payload)
+            onSave(updated)
+        } else {
+            onSave(BabyEvent(babyId: baby.id, label: .bath, startTime: time, note: note, payload: .bath(payload)))
+        }
     }
 }
