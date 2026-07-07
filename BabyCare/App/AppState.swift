@@ -53,24 +53,37 @@ final class AppState: ObservableObject {
     func didSignIn() {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
-        // On a new device currentBaby is nil — fetch baby profile from server first,
-        // then pull events/growth so the new device is fully synced.
+        // Always reconcile the local selected baby with the server account.
+        // If this device has no local baby, or has a baby from another account,
+        // switch to one of the babies returned by the server before pulling data.
         Task {
-            await fetchBabyFromServerIfNeeded()
+            await syncCurrentBabyFromServer()
             await SyncManager.shared.pullUpdates()
         }
     }
 
-    /// Fetches the first baby from the server and stores it locally if we have none.
-    func fetchBabyFromServerIfNeeded() async {
-        guard currentBaby == nil else { return }
+    /// Reconciles local currentBaby with the authenticated account's babies.
+    ///
+    /// Cases handled:
+    /// - New device: currentBaby is nil -> choose the first server baby.
+    /// - Switched account: local currentBaby belongs to another account -> replace it.
+    /// - Same account: keep the currently selected baby if it exists on the server.
+    func syncCurrentBabyFromServer() async {
         do {
             let babies: [Baby] = try await APIClient.shared.request("/babies")
-            if let first = babies.first {
-                currentBaby = first
+            guard !babies.isEmpty else {
+                currentBaby = nil
+                return
+            }
+
+            if let local = currentBaby,
+               let matched = babies.first(where: { $0.id == local.id }) {
+                currentBaby = matched
+            } else {
+                currentBaby = babies.first
             }
         } catch {
-            print("[AppState] fetchBabyFromServerIfNeeded failed: \(error)")
+            print("[AppState] syncCurrentBabyFromServer failed: \(error)")
         }
     }
 
