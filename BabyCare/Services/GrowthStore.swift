@@ -50,6 +50,11 @@ final class GrowthStore {
         save()
     }
 
+    /// Clears in-memory records only — disk file is preserved for potential recovery.
+    func clearMemory() {
+        records = []
+    }
+
     // MARK: - Query
     func records(for babyId: UUID, from start: Date, to end: Date) -> [GrowthRecord] {
         records

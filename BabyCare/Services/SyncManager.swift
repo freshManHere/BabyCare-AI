@@ -71,10 +71,12 @@ final class SyncManager {
     }
 
     /// Call on sign-out: discard pending queue and reset sync timestamps for this user.
+    /// ORDER MATTERS: clear timestamps before clearing currentUserId so key() still
+    /// returns the user-namespaced key when nil is written to UserDefaults.
     func clearForSignOut() {
         pendingQueue = []
-        lastSyncDateEvents = nil
-        lastSyncDateGrowth = nil
+        lastSyncDateEvents = nil   // must come before currentUserId = ""
+        lastSyncDateGrowth = nil   // must come before currentUserId = ""
         currentUserId = ""
     }
 
@@ -148,7 +150,8 @@ final class SyncManager {
 
     // MARK: - Incremental pull
     /// Pulls updates for ALL babies in the current account, not just currentBaby.
-    /// This ensures multi-baby accounts are fully synced on any device.
+    /// Timestamps are only advanced when ALL babies succeed, so a partial failure
+    /// does not cause data to be permanently skipped on the next sync.
     func pullUpdates() async {
         guard APIClient.shared.isAuthenticated else { return }
         let sync: any SyncService = RemoteSyncService()
@@ -161,6 +164,8 @@ final class SyncManager {
 
         let eventStore = EventStore.shared
         let growthStore = GrowthStore.shared
+        var eventsAllSucceeded = true
+        var growthAllSucceeded = true
 
         for baby in babies {
             // Pull events independently per baby
@@ -171,7 +176,9 @@ final class SyncManager {
                     if event.deletedAt != nil { eventStore.delete(event) }
                     else { eventStore.upsert(event) }
                 }
-            } catch { /* silent fail — retry next foreground */ }
+            } catch {
+                eventsAllSucceeded = false  // this baby failed; don't advance timestamp
+            }
 
             // Pull growth records independently per baby
             do {
@@ -180,12 +187,15 @@ final class SyncManager {
                 for record in updatedGrowth {
                     growthStore.upsert(record, syncOnly: true)
                 }
-            } catch { /* silent fail — retry next foreground */ }
+            } catch {
+                growthAllSucceeded = false
+            }
         }
 
-        // Advance timestamps only after iterating all babies
-        lastSyncDateEvents = Date()
-        lastSyncDateGrowth = Date()
+        // Only advance the timestamp if every baby succeeded,
+        // so failed babies are retried on next sync rather than silently skipped.
+        if eventsAllSucceeded { lastSyncDateEvents = Date() }
+        if growthAllSucceeded { lastSyncDateGrowth = Date() }
     }
 
     // MARK: - Foreground trigger

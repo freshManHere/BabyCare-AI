@@ -118,12 +118,13 @@ final class AppState: ObservableObject {
         isAuthenticated = false
     }
 
-    /// Clears all locally cached data for the current user.
-    /// Called on explicit sign-out AND on 401 automatic sign-out.
+    /// Clears in-memory state for the current user.
+    /// Only clears memory — disk files are intentionally preserved so data can be
+    /// recovered if a 401 is spurious (e.g. transient server error).
     private func clearLocalState() {
         currentBaby = nil
-        EventStore.shared.deleteAll()
-        GrowthStore.shared.deleteAll()
+        EventStore.shared.events = []
+        GrowthStore.shared.clearMemory()
         SyncManager.shared.clearForSignOut()
     }
 
