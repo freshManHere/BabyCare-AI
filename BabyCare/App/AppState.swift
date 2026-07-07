@@ -36,6 +36,13 @@ final class AppState: ObservableObject {
         // Give SyncManager a reference so pullUpdates() can read currentBaby
         SyncManager.shared.appState = self
 
+        // On cold start with an existing token, restore the userId so SyncManager
+        // uses the correct per-user UserDefaults keys (queue, sync timestamps).
+        if hasToken, let userId = decodeUserIdFromToken() {
+            SyncManager.shared.currentUserId = userId
+            SyncManager.shared.loadQueueForCurrentUser()
+        }
+
         // Listen for sign-out events (401 from APIClient)
         signOutObserver = NotificationCenter.default.addObserver(
             forName: .userDidSignOut, object: nil, queue: .main
