@@ -277,16 +277,17 @@ struct BabyProfileEditView: View {
         let birthdaySnapshot = birthday
         let genderSnapshot = gender
 
-        // Run compression + upload off the main thread to avoid UI stutter
-        Task.detached(priority: .userInitiated) {
-            // Compress avatar to max 200×200, JPEG 80% to keep DB size small
-            let compressedAvatar: Data? = rawAvatarData.flatMap { data in
-                guard let img = UIImage(data: data) else { return data }
-                let size = CGSize(width: 200, height: 200)
-                return UIGraphicsImageRenderer(size: size).image { _ in
-                    img.draw(in: CGRect(origin: .zero, size: size))
-                }.jpegData(compressionQuality: 0.8)
-            }
+        // Compress off the main thread to avoid UI stutter with large images
+        Task {
+            let compressedAvatar: Data? = await Task.detached(priority: .userInitiated) {
+                rawAvatarData.flatMap { data in
+                    guard let img = UIImage(data: data) else { return data }
+                    let size = CGSize(width: 200, height: 200)
+                    return UIGraphicsImageRenderer(size: size).image { _ in
+                        img.draw(in: CGRect(origin: .zero, size: size))
+                    }.jpegData(compressionQuality: 0.8)
+                }
+            }.value
 
             var baby = Baby(
                 id: babyId,
@@ -296,10 +297,7 @@ struct BabyProfileEditView: View {
                 gender: genderSnapshot
             )
             baby.avatarData = compressedAvatar
-
-            await MainActor.run {
-                appState.currentBaby = baby
-            }
+            appState.currentBaby = baby
 
             // Push updated baby profile (including avatar) to server
             let sync = RemoteSyncService()
