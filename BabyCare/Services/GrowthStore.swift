@@ -45,6 +45,11 @@ final class GrowthStore {
         SyncManager.shared.enqueueDeleteGrowthRecord(babyId: record.babyId, recordId: record.id)
     }
 
+    func deleteAll() {
+        records = []
+        save()
+    }
+
     // MARK: - Query
     func records(for babyId: UUID, from start: Date, to end: Date) -> [GrowthRecord] {
         records

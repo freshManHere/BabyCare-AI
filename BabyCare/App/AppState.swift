@@ -40,6 +40,7 @@ final class AppState: ObservableObject {
         signOutObserver = NotificationCenter.default.addObserver(
             forName: .userDidSignOut, object: nil, queue: .main
         ) { [weak self] _ in
+            self?.clearLocalState()
             self?.isAuthenticated = false
         }
     }
@@ -53,13 +54,31 @@ final class AppState: ObservableObject {
     func didSignIn() {
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = true
-        // Always reconcile the local selected baby with the server account.
-        // If this device has no local baby, or has a baby from another account,
-        // switch to one of the babies returned by the server before pulling data.
         Task {
+            // Set the userId in SyncManager so all subsequent keys are namespaced
+            if let userId = decodeUserIdFromToken() {
+                SyncManager.shared.currentUserId = userId
+                SyncManager.shared.loadQueueForCurrentUser()
+            }
             await syncCurrentBabyFromServer()
             await SyncManager.shared.pullUpdates()
         }
+    }
+
+    /// Extracts the userId claim from the JWT access token (no signature verification needed here).
+    private func decodeUserIdFromToken() -> String? {
+        guard let token = APIClient.shared.accessToken else { return nil }
+        let parts = token.split(separator: ".");
+        guard parts.count == 3 else { return nil }
+        var payload = String(parts[1])
+        // Base64url → Base64
+        let rem = payload.count % 4
+        if rem > 0 { payload += String(repeating: "=", count: 4 - rem) }
+        payload = payload.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let userId = json["userId"] as? String else { return nil }
+        return userId
     }
 
     /// Reconciles local currentBaby with the authenticated account's babies.
@@ -93,9 +112,19 @@ final class AppState: ObservableObject {
     }
 
     func signOut() {
+        clearLocalState()
         APIClient.shared.logout()
         UserDefaults.standard.removeObject(forKey: Self.skippedAuthKey)
         isAuthenticated = false
+    }
+
+    /// Clears all locally cached data for the current user.
+    /// Called on explicit sign-out AND on 401 automatic sign-out.
+    private func clearLocalState() {
+        currentBaby = nil
+        EventStore.shared.deleteAll()
+        GrowthStore.shared.deleteAll()
+        SyncManager.shared.clearForSignOut()
     }
 
     func switchToTab(_ tab: AppTab) {

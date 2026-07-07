@@ -18,15 +18,24 @@ final class SyncManager {
     }
 
     // MARK: - State
+    /// The current user id, used to namespace all per-user storage keys.
+    /// Set by AppState on sign-in; cleared on sign-out.
+    var currentUserId: String = UserDefaults.standard.string(forKey: "sync_current_user_id") ?? "" {
+        didSet { UserDefaults.standard.set(currentUserId, forKey: "sync_current_user_id") }
+    }
+
+    private func key(_ base: String) -> String {
+        currentUserId.isEmpty ? base : "\(currentUserId)_\(base)"
+    }
+
     var lastSyncDateEvents: Date? {
-        get { UserDefaults.standard.object(forKey: "last_sync_date_events") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "last_sync_date_events") }
+        get { UserDefaults.standard.object(forKey: key("last_sync_date_events")) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: key("last_sync_date_events")) }
     }
     var lastSyncDateGrowth: Date? {
-        get { UserDefaults.standard.object(forKey: "last_sync_date_growth") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "last_sync_date_growth") }
+        get { UserDefaults.standard.object(forKey: key("last_sync_date_growth")) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: key("last_sync_date_growth")) }
     }
-    /// Legacy key — kept for migration, not actively used
     var lastSyncDate: Date? {
         get { lastSyncDateEvents }
         set { lastSyncDateEvents = newValue; lastSyncDateGrowth = newValue }
@@ -45,15 +54,28 @@ final class SyncManager {
 
     private var pendingQueue: [PendingItem] = [] {
         didSet {
-            UserDefaults.standard.set(try? JSONEncoder().encode(pendingQueue), forKey: "sync_pending_queue_v1")
+            UserDefaults.standard.set(try? JSONEncoder().encode(pendingQueue), forKey: key("sync_pending_queue_v1"))
         }
     }
 
     private func loadQueue() {
-        guard let data = UserDefaults.standard.data(forKey: "sync_pending_queue_v1"),
+        guard let data = UserDefaults.standard.data(forKey: key("sync_pending_queue_v1")),
               let items = try? JSONDecoder().decode([PendingItem].self, from: data)
         else { return }
         pendingQueue = items
+    }
+
+    /// Call after setting currentUserId to load the correct user's queue from storage.
+    func loadQueueForCurrentUser() {
+        loadQueue()
+    }
+
+    /// Call on sign-out: discard pending queue and reset sync timestamps for this user.
+    func clearForSignOut() {
+        pendingQueue = []
+        lastSyncDateEvents = nil
+        lastSyncDateGrowth = nil
+        currentUserId = ""
     }
 
     // Push a new or updated event
@@ -125,61 +147,45 @@ final class SyncManager {
     }
 
     // MARK: - Incremental pull
-    /// Pulls new/updated events and growth records from server since last sync.
-    /// Reads babyId from appState — no-ops if not authenticated or no baby set.
+    /// Pulls updates for ALL babies in the current account, not just currentBaby.
+    /// This ensures multi-baby accounts are fully synced on any device.
     func pullUpdates() async {
-        guard APIClient.shared.isAuthenticated,
-              let babyId = appState?.currentBaby?.id else { return }
-        let sync: any SyncService = RemoteSyncService()
-
-        // Pull events independently
-        do {
-            let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
-            let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
-            let eventStore = EventStore.shared
-            for event in updatedEvents {
-                if event.deletedAt != nil {
-                    eventStore.delete(event)
-                } else {
-                    eventStore.upsert(event)
-                }
-            }
-            lastSyncDateEvents = Date()
-        } catch { /* silent fail — retry next foreground */ }
-
-        // Pull growth records independently
-        do {
-            let since = lastSyncDateGrowth ?? Date(timeIntervalSince1970: 0)
-            let updatedGrowth = try await sync.syncGrowthRecords(babyId: babyId, since: since)
-            let growthStore = GrowthStore.shared
-            for record in updatedGrowth {
-                growthStore.upsert(record, syncOnly: true)
-            }
-            lastSyncDateGrowth = Date()
-        } catch { /* silent fail — retry next foreground */ }
-    }
-
-    /// Legacy overload kept for call sites that pass babyId explicitly
-    func pullUpdates(babyId: UUID) async {
         guard APIClient.shared.isAuthenticated else { return }
         let sync: any SyncService = RemoteSyncService()
+
+        // Fetch the full baby list for this account
+        let babies: [Baby]
         do {
-            let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
-            let updatedEvents = try await sync.syncEvents(babyId: babyId, since: since)
-            let eventStore = EventStore.shared
-            for event in updatedEvents {
-                if event.deletedAt != nil { eventStore.delete(event) }
-                else { eventStore.upsert(event) }
-            }
-            lastSyncDateEvents = Date()
-        } catch {}
-        do {
-            let since = lastSyncDateGrowth ?? Date(timeIntervalSince1970: 0)
-            let updatedGrowth = try await sync.syncGrowthRecords(babyId: babyId, since: since)
-            let growthStore = GrowthStore.shared
-            for record in updatedGrowth { growthStore.upsert(record, syncOnly: true) }
-            lastSyncDateGrowth = Date()
-        } catch {}
+            babies = try await sync.fetchBabies()
+        } catch { return }  // can't sync without knowing the babies
+
+        let eventStore = EventStore.shared
+        let growthStore = GrowthStore.shared
+
+        for baby in babies {
+            // Pull events independently per baby
+            do {
+                let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
+                let updatedEvents = try await sync.syncEvents(babyId: baby.id, since: since)
+                for event in updatedEvents {
+                    if event.deletedAt != nil { eventStore.delete(event) }
+                    else { eventStore.upsert(event) }
+                }
+            } catch { /* silent fail — retry next foreground */ }
+
+            // Pull growth records independently per baby
+            do {
+                let since = lastSyncDateGrowth ?? Date(timeIntervalSince1970: 0)
+                let updatedGrowth = try await sync.syncGrowthRecords(babyId: baby.id, since: since)
+                for record in updatedGrowth {
+                    growthStore.upsert(record, syncOnly: true)
+                }
+            } catch { /* silent fail — retry next foreground */ }
+        }
+
+        // Advance timestamps only after iterating all babies
+        lastSyncDateEvents = Date()
+        lastSyncDateGrowth = Date()
     }
 
     // MARK: - Foreground trigger
