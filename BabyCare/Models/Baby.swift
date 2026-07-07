@@ -30,22 +30,14 @@ struct Baby: Identifiable, Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id       = try container.decodeIfPresent(UUID.self,   forKey: .id)       ?? UUID()
-        name     = try container.decode(String.self,          forKey: .name)
-        nickname = try container.decode(String.self,          forKey: .nickname)
-        gender   = try container.decode(Gender.self,          forKey: .gender)
-        avatarData = nil  // never comes from server
-
-        // Server sends date-only string "YYYY-MM-DD"; try ISO8601 first then date-only
-        if let date = try? container.decode(Date.self, forKey: .birthday) {
-            birthday = date
-        } else {
-            let str = try container.decode(String.self, forKey: .birthday)
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.timeZone = TimeZone(identifier: "UTC")
-            birthday = formatter.date(from: str) ?? Date()
-        }
+        id         = try container.decodeIfPresent(UUID.self,   forKey: .id)       ?? UUID()
+        name       = try container.decode(String.self,          forKey: .name)
+        nickname   = try container.decode(String.self,          forKey: .nickname)
+        gender     = try container.decode(Gender.self,          forKey: .gender)
+        avatarData = nil  // local-only, never comes from server
+        // Date handled by APIClient.decoder's custom dateDecodingStrategy
+        // which supports ISO8601 with fractional seconds AND date-only "yyyy-MM-dd"
+        birthday   = try container.decode(Date.self, forKey: .birthday)
     }
 
     func encode(to encoder: Encoder) throws {

@@ -13,7 +13,28 @@ final class APIClient {
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase
-        d.dateDecodingStrategy = .iso8601
+        // PostgreSQL returns timestamps with fractional seconds ("2026-02-26T16:00:00.000Z").
+        // The default .iso8601 strategy does NOT handle fractional seconds, causing all
+        // date fields to silently fail. Use a custom strategy that tries both formats,
+        // plus a date-only fallback for "birthday" fields.
+        d.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let str = try container.decode(String.self)
+            let full = ISO8601DateFormatter()
+            full.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = full.date(from: str) { return date }
+            let noFrac = ISO8601DateFormatter()
+            noFrac.formatOptions = [.withInternetDateTime]
+            if let date = noFrac.date(from: str) { return date }
+            let dayOnly = DateFormatter()
+            dayOnly.dateFormat = "yyyy-MM-dd"
+            dayOnly.timeZone = TimeZone(identifier: "UTC")
+            if let date = dayOnly.date(from: str) { return date }
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Cannot decode date from: \(str)"
+            )
+        }
         return d
     }()
     private let encoder: JSONEncoder = {
