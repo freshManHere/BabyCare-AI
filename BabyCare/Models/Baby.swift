@@ -13,10 +13,10 @@ struct Baby: Identifiable, Codable {
         case female = "女宝"
     }
 
-    // MARK: - Custom Codable to handle server's date-only "birthday" field
     enum CodingKeys: String, CodingKey {
         case id, name, nickname, birthday, gender
-        // avatarData is local-only, never sent to/received from server
+        case avatarBase64
+        // avatarData is local-only UI cache, never sent to/received from server directly
     }
 
     init(id: UUID = UUID(), name: String, nickname: String, birthday: Date, gender: Gender, avatarData: Data? = nil) {
@@ -34,10 +34,15 @@ struct Baby: Identifiable, Codable {
         name       = try container.decode(String.self,          forKey: .name)
         nickname   = try container.decode(String.self,          forKey: .nickname)
         gender     = try container.decode(Gender.self,          forKey: .gender)
-        avatarData = nil  // local-only, never comes from server
         // Date handled by APIClient.decoder's custom dateDecodingStrategy
-        // which supports ISO8601 with fractional seconds AND date-only "yyyy-MM-dd"
         birthday   = try container.decode(Date.self, forKey: .birthday)
+        // Decode base64 avatar from server → Data
+        if let b64 = try container.decodeIfPresent(String.self, forKey: .avatarBase64),
+           let data = Data(base64Encoded: b64) {
+            avatarData = data
+        } else {
+            avatarData = nil
+        }
     }
 
     func encode(to encoder: Encoder) throws {
@@ -51,6 +56,10 @@ struct Baby: Identifiable, Codable {
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(identifier: "UTC")
         try container.encode(formatter.string(from: birthday), forKey: .birthday)
+        // Encode local avatarData as base64 for server storage
+        if let data = avatarData {
+            try container.encode(data.base64EncodedString(), forKey: .avatarBase64)
+        }
     }
 
     var ageInMonths: Int {
