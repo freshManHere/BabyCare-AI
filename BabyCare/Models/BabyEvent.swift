@@ -64,6 +64,78 @@ enum EventPayload: Codable {
     case motorSkill(MotorSkillPayload)
     case symptom(SymptomPayload)
     case other(String)
+
+    // MARK: Custom Codable
+    // The server stores JSONB with snake_case keys coming from Swift's
+    // convertToSnakeCase encoder (e.g. "motor_skill", "diaper_change").
+    // convertFromSnakeCase on the decoder does NOT automatically map enum
+    // discriminator keys, so we handle both forms manually here.
+    private enum CodingKeys: String, CodingKey {
+        case feeding
+        case sleep
+        case diaperChange, diaper_change
+        case outing
+        case bath
+        case motorSkill, motor_skill
+        case symptom
+        case other
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if container.contains(.feeding) {
+            self = .feeding(try container.decode(AssocWrapper<FeedingPayload>.self,   forKey: .feeding).value)
+        } else if container.contains(.sleep) {
+            self = .sleep(try container.decode(AssocWrapper<SleepPayload>.self,       forKey: .sleep).value)
+        } else if container.contains(.diaperChange) {
+            self = .diaperChange(try container.decode(AssocWrapper<DiaperChangePayload>.self, forKey: .diaperChange).value)
+        } else if container.contains(.diaper_change) {
+            self = .diaperChange(try container.decode(AssocWrapper<DiaperChangePayload>.self, forKey: .diaper_change).value)
+        } else if container.contains(.outing) {
+            self = .outing(try container.decode(AssocWrapper<OutingPayload>.self,     forKey: .outing).value)
+        } else if container.contains(.bath) {
+            self = .bath(try container.decode(AssocWrapper<BathPayload>.self,         forKey: .bath).value)
+        } else if container.contains(.motorSkill) {
+            self = .motorSkill(try container.decode(AssocWrapper<MotorSkillPayload>.self, forKey: .motorSkill).value)
+        } else if container.contains(.motor_skill) {
+            self = .motorSkill(try container.decode(AssocWrapper<MotorSkillPayload>.self, forKey: .motor_skill).value)
+        } else if container.contains(.symptom) {
+            self = .symptom(try container.decode(AssocWrapper<SymptomPayload>.self,   forKey: .symptom).value)
+        } else if container.contains(.other) {
+            self = .other(try container.decode(String.self, forKey: .other))
+        } else {
+            self = .other("")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .feeding(let p):      try container.encode(AssocWrapper(p), forKey: .feeding)
+        case .sleep(let p):        try container.encode(AssocWrapper(p), forKey: .sleep)
+        case .diaperChange(let p): try container.encode(AssocWrapper(p), forKey: .diaperChange)
+        case .outing(let p):       try container.encode(AssocWrapper(p), forKey: .outing)
+        case .bath(let p):         try container.encode(AssocWrapper(p), forKey: .bath)
+        case .motorSkill(let p):   try container.encode(AssocWrapper(p), forKey: .motorSkill)
+        case .symptom(let p):      try container.encode(AssocWrapper(p), forKey: .symptom)
+        case .other(let s):        try container.encode(s, forKey: .other)
+        }
+    }
+}
+
+/// Wraps an associated value as `{"_0": value}` to match Swift's default enum encoding.
+private struct AssocWrapper<T: Codable>: Codable {
+    let value: T
+    enum CodingKeys: String, CodingKey { case _0 }
+    init(_ value: T) { self.value = value }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        value = try c.decode(T.self, forKey: ._0)
+    }
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(value, forKey: ._0)
+    }
 }
 
 // MARK: - Feeding
