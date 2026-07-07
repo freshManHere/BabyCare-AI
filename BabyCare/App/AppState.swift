@@ -52,6 +52,18 @@ final class AppState: ObservableObject {
             self?.clearLocalState()
             self?.isAuthenticated = false
         }
+
+        // If we have a token but no local baby data (e.g. after reinstall from Xcode
+        // or device restore where Keychain persists but local files are gone),
+        // run the same sync flow as didSignIn() so data is recovered automatically.
+        if hasToken && currentBaby == nil && !skipped {
+            isSyncingAfterLogin = true
+            Task {
+                await syncCurrentBabyFromServer()
+                await SyncManager.shared.pullUpdates()
+                isSyncingAfterLogin = false
+            }
+        }
     }
 
     deinit {
