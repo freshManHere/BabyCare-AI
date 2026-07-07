@@ -56,8 +56,10 @@ struct Baby: Identifiable, Codable {
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(identifier: "UTC")
         try container.encode(formatter.string(from: birthday), forKey: .birthday)
-        // Encode local avatarData as base64 for server storage
-        if let data = avatarData {
+        // Encode local avatarData as base64 for server storage.
+        // Skip if data is too large (> 150 KB after compression) to avoid
+        // bloating the request with uncompressed images from legacy data.
+        if let data = avatarData, data.count <= 150_000 {
             try container.encode(data.base64EncodedString(), forKey: .avatarBase64)
         }
     }

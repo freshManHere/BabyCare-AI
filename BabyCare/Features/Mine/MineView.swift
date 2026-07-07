@@ -272,28 +272,36 @@ struct BabyProfileEditView: View {
 
     private func save() {
         let name = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Compress avatar to max 200×200, JPEG 80% to keep DB size small
-        let compressedAvatar: Data? = avatarData.flatMap { data in
-            guard let img = UIImage(data: data) else { return data }
-            let size = CGSize(width: 200, height: 200)
-            return UIGraphicsImageRenderer(size: size).image { _ in
-                img.draw(in: CGRect(origin: .zero, size: size))
-            }.jpegData(compressionQuality: 0.8)
-        }
+        let babyId = appState.currentBaby?.id ?? UUID()
+        let rawAvatarData = avatarData
+        let birthdaySnapshot = birthday
+        let genderSnapshot = gender
 
-        // Preserve existing baby id if editing, otherwise generate new
-        var baby = Baby(
-            id: appState.currentBaby?.id ?? UUID(),
-            name: name.isEmpty ? "宝宝" : name,
-            nickname: name.isEmpty ? "宝宝" : name,
-            birthday: birthday,
-            gender: gender
-        )
-        baby.avatarData = compressedAvatar
-        appState.currentBaby = baby
+        // Run compression + upload off the main thread to avoid UI stutter
+        Task.detached(priority: .userInitiated) {
+            // Compress avatar to max 200×200, JPEG 80% to keep DB size small
+            let compressedAvatar: Data? = rawAvatarData.flatMap { data in
+                guard let img = UIImage(data: data) else { return data }
+                let size = CGSize(width: 200, height: 200)
+                return UIGraphicsImageRenderer(size: size).image { _ in
+                    img.draw(in: CGRect(origin: .zero, size: size))
+                }.jpegData(compressionQuality: 0.8)
+            }
 
-        // Push updated baby profile (including avatar) to server
-        Task {
+            var baby = Baby(
+                id: babyId,
+                name: name.isEmpty ? "宝宝" : name,
+                nickname: name.isEmpty ? "宝宝" : name,
+                birthday: birthdaySnapshot,
+                gender: genderSnapshot
+            )
+            baby.avatarData = compressedAvatar
+
+            await MainActor.run {
+                appState.currentBaby = baby
+            }
+
+            // Push updated baby profile (including avatar) to server
             let sync = RemoteSyncService()
             try? await sync.pushBaby(baby)
         }
