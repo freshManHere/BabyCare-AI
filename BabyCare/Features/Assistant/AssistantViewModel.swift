@@ -20,8 +20,11 @@ final class AssistantViewModel {
 
         let systemPrompt = AssistantContextBuilder.buildSystemPrompt(baby: baby, store: store)
         var glmMessages: [GLMMessage] = [GLMMessage(role: "system", content: systemPrompt)]
+        // Truncate each history message to 2000 chars to avoid oversized payloads
+        // (long AI responses can accumulate and exceed the server body limit).
         glmMessages += messages.suffix(10).map {
-            GLMMessage(role: $0.role == .user ? "user" : "assistant", content: $0.text)
+            let truncated = $0.text.count > 2000 ? String($0.text.prefix(2000)) + "…" : $0.text
+            return GLMMessage(role: $0.role == .user ? "user" : "assistant", content: truncated)
         }
 
         let placeholder = ChatMessage(role: .assistant, text: "")
