@@ -162,6 +162,13 @@ final class SyncManager {
             babies = try await sync.fetchBabies()
         } catch { return }  // can't sync without knowing the babies
 
+        // Refresh the current baby profile (name, avatar, etc.) from server.
+        // This ensures profile changes made on another device propagate here.
+        if let appState, let local = appState.currentBaby,
+           let matched = babies.first(where: { $0.id == local.id }) {
+            appState.currentBaby = matched
+        }
+
         let eventStore = EventStore.shared
         let growthStore = GrowthStore.shared
         var eventsAllSucceeded = true
