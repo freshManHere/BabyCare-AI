@@ -184,10 +184,26 @@ final class AppState: ObservableObject {
     }
 
     private static func loadBaby() -> Baby? {
-        guard let data = UserDefaults.standard.data(forKey: babyKey),
-              let baby = try? JSONDecoder().decode(Baby.self, from: data) else {
-            return nil
+        guard let data = UserDefaults.standard.data(forKey: babyKey) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let str = try container.decode(String.self)
+            let dayOnly = DateFormatter()
+            dayOnly.dateFormat = "yyyy-MM-dd"
+            dayOnly.timeZone = TimeZone(identifier: "UTC")
+            if let date = dayOnly.date(from: str) { return date }
+            let full = ISO8601DateFormatter()
+            full.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = full.date(from: str) { return date }
+            let noFrac = ISO8601DateFormatter()
+            noFrac.formatOptions = [.withInternetDateTime]
+            if let date = noFrac.date(from: str) { return date }
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Cannot decode date from: \(str)"
+            )
         }
-        return baby
+        return try? decoder.decode(Baby.self, from: data)
     }
 }

@@ -16,7 +16,6 @@ struct Baby: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id, name, nickname, birthday, gender
         case avatarBase64
-        // avatarData is local-only UI cache, never sent to/received from server directly
     }
 
     init(id: UUID = UUID(), name: String, nickname: String, birthday: Date, gender: Gender, avatarData: Data? = nil) {

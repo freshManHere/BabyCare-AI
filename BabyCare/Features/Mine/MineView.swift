@@ -273,6 +273,7 @@ struct BabyProfileEditView: View {
     private func save() {
         let name = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
         let babyId = appState.currentBaby?.id ?? UUID()
+        let isExisting = appState.currentBaby != nil
         let rawAvatarData = avatarData
         let birthdaySnapshot = birthday
         let genderSnapshot = gender
@@ -299,9 +300,14 @@ struct BabyProfileEditView: View {
             baby.avatarData = compressedAvatar
             appState.currentBaby = baby
 
-            // Push updated baby profile (including avatar) to server
+            // Push updated baby profile (including avatar) to server.
+            // Use PUT for existing babies to update in place; POST to create new ones.
             let sync = RemoteSyncService()
-            try? await sync.pushBaby(baby)
+            if isExisting {
+                try? await sync.updateBaby(baby)
+            } else {
+                try? await sync.pushBaby(baby)
+            }
         }
 
         dismiss()

@@ -9,6 +9,7 @@ protocol SyncService {
     // MARK: Baby
     func fetchBabies() async throws -> [Baby]
     func pushBaby(_ baby: Baby) async throws
+    func updateBaby(_ baby: Baby) async throws
     func deleteBaby(id: UUID) async throws
 
     // MARK: Events
