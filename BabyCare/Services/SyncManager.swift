@@ -163,12 +163,27 @@ final class SyncManager {
         } catch { return }  // can't sync without knowing the babies
 
         // Refresh the current baby profile (name, avatar, etc.) from server.
-        // Preserve local avatarData if the server version has none — this
-        // prevents a failed/in-flight push from reverting a locally saved avatar.
+        // If the user saved a baby profile on this device and the push hasn't
+        // been confirmed yet (localBabySavedAt is set), keep the local avatar
+        // and retry the push instead of overwriting with stale server data.
         if let appState, let local = appState.currentBaby,
            let matched = babies.first(where: { $0.id == local.id }) {
             var merged = matched
-            if merged.avatarData == nil, local.avatarData != nil {
+            let savedAt = appState.localBabySavedAt(for: local.id)
+            if savedAt != nil, local.avatarData != nil {
+                // Local is newer than confirmed server state — keep local avatar
+                // and re-attempt the push so server eventually catches up.
+                merged.avatarData = local.avatarData
+                Task { [weak appState] in
+                    let sync = RemoteSyncService()
+                    if let serverBaby = try? await sync.updateBaby(merged) {
+                        appState?.currentBaby = serverBaby
+                        appState?.setLocalBabySavedAt(nil, for: local.id)
+                    }
+                }
+            } else if merged.avatarData == nil, local.avatarData != nil {
+                // Server has no avatar but local does (e.g. push pending from
+                // a previous session) — keep local as a safety net.
                 merged.avatarData = local.avatarData
             }
             appState.currentBaby = merged

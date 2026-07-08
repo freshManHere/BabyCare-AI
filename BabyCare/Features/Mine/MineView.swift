@@ -298,18 +298,22 @@ struct BabyProfileEditView: View {
                 gender: genderSnapshot
             )
             baby.avatarData = compressedAvatar
-            // Save locally BEFORE dismissing so UserDefaults is always updated
-            // even if the app is suspended before the server push completes.
+            // 1. Persist locally first — this is the authoritative source of
+            //    truth for this device until the server push is confirmed.
             appState.currentBaby = baby
+            appState.setLocalBabySavedAt(Date(), for: babyId)
             dismiss()
 
-            // Push updated baby profile (including avatar) to server.
-            // Use PUT for existing babies to update in place; POST to create new ones.
+            // 2. Push to server. On success, adopt the server response (which
+            //    carries the confirmed updated_at) and clear the pending flag so
+            //    pullUpdates() knows the server is now in sync.
             let sync = RemoteSyncService()
-            if isExisting {
-                try? await sync.updateBaby(baby)
-            } else {
-                try? await sync.pushBaby(baby)
+            if let serverBaby = try? await (isExisting
+                ? sync.updateBaby(baby)
+                : sync.pushBaby(baby))
+            {
+                appState.currentBaby = serverBaby
+                appState.setLocalBabySavedAt(nil, for: babyId)
             }
         }
     }

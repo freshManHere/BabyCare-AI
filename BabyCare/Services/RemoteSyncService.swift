@@ -18,12 +18,14 @@ final class RemoteSyncService: SyncService {
         try await client.request("/babies")
     }
 
-    func pushBaby(_ baby: Baby) async throws {
-        let _: Baby = try await client.request("/babies", method: "POST", body: baby)
+    @discardableResult
+    func pushBaby(_ baby: Baby) async throws -> Baby {
+        try await client.request("/babies", method: "POST", body: baby)
     }
 
-    func updateBaby(_ baby: Baby) async throws {
-        let _: Baby = try await client.request("/babies/\(baby.id)", method: "PUT", body: baby)
+    @discardableResult
+    func updateBaby(_ baby: Baby) async throws -> Baby {
+        try await client.request("/babies/\(baby.id)", method: "PUT", body: baby)
     }
 
     func deleteBaby(id: UUID) async throws {

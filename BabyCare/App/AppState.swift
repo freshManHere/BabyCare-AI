@@ -28,6 +28,20 @@ final class AppState: ObservableObject {
 
     private static let babyKey = "saved_baby_v1"
     private static let skippedAuthKey = "skipped_auth_v1"
+    /// Timestamp of the last time the user explicitly saved a baby profile on
+    /// this device.  Keyed by baby UUID so multiple babies are handled safely.
+    /// Cleared when the server push is confirmed so pullUpdates() knows whether
+    /// local or server is the authoritative source for the avatar.
+    func localBabySavedAt(for babyId: UUID) -> Date? {
+        UserDefaults.standard.object(forKey: "local_baby_saved_\(babyId)") as? Date
+    }
+    func setLocalBabySavedAt(_ date: Date?, for babyId: UUID) {
+        if let date {
+            UserDefaults.standard.set(date, forKey: "local_baby_saved_\(babyId)")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "local_baby_saved_\(babyId)")
+        }
+    }
 
     nonisolated(unsafe) private var signOutObserver: NSObjectProtocol?
 
@@ -159,6 +173,7 @@ final class AppState: ObservableObject {
     /// Only clears memory — disk files are intentionally preserved so data can be
     /// recovered if a 401 is spurious (e.g. transient server error).
     private func clearLocalState() {
+        if let id = currentBaby?.id { setLocalBabySavedAt(nil, for: id) }
         currentBaby = nil
         EventStore.shared.events = []
         GrowthStore.shared.clearMemory()

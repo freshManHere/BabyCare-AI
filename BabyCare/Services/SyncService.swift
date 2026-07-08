@@ -8,8 +8,8 @@ import Foundation
 protocol SyncService {
     // MARK: Baby
     func fetchBabies() async throws -> [Baby]
-    func pushBaby(_ baby: Baby) async throws
-    func updateBaby(_ baby: Baby) async throws
+    @discardableResult func pushBaby(_ baby: Baby) async throws -> Baby
+    @discardableResult func updateBaby(_ baby: Baby) async throws -> Baby
     func deleteBaby(id: UUID) async throws
 
     // MARK: Events
