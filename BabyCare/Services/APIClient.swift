@@ -26,9 +26,10 @@ final class APIClient {
             let noFrac = ISO8601DateFormatter()
             noFrac.formatOptions = [.withInternetDateTime]
             if let date = noFrac.date(from: str) { return date }
+            // Parse date-only strings (e.g. birthday) in the local calendar
+            // so the day is never shifted by timezone conversion.
             let dayOnly = DateFormatter()
             dayOnly.dateFormat = "yyyy-MM-dd"
-            dayOnly.timeZone = TimeZone(identifier: "UTC")
             if let date = dayOnly.date(from: str) { return date }
             throw DecodingError.dataCorruptedError(
                 in: container,

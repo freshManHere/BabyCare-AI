@@ -50,11 +50,11 @@ struct Baby: Identifiable, Codable {
         try container.encode(name,     forKey: .name)
         try container.encode(nickname, forKey: .nickname)
         try container.encode(gender,   forKey: .gender)
-        // Encode birthday as date-only string for the backend
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        try container.encode(formatter.string(from: birthday), forKey: .birthday)
+        // Encode birthday as a date-only string using the local calendar,
+        // so the day shown to the user is preserved regardless of timezone.
+        let comps = Calendar.current.dateComponents([.year, .month, .day], from: birthday)
+        let birthdayString = String(format: "%04d-%02d-%02d", comps.year!, comps.month!, comps.day!)
+        try container.encode(birthdayString, forKey: .birthday)
         // Encode local avatarData as base64 for server storage.
         // Skip if data is too large (> 150 KB after compression) to avoid
         // bloating the request with uncompressed images from legacy data.

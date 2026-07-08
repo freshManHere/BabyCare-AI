@@ -191,7 +191,6 @@ final class AppState: ObservableObject {
             let str = try container.decode(String.self)
             let dayOnly = DateFormatter()
             dayOnly.dateFormat = "yyyy-MM-dd"
-            dayOnly.timeZone = TimeZone(identifier: "UTC")
             if let date = dayOnly.date(from: str) { return date }
             let full = ISO8601DateFormatter()
             full.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
