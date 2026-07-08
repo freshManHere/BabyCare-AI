@@ -313,6 +313,7 @@ struct BabyProfileEditView: View {
             }
         }
     }
+}
 
 // MARK: - #20 Reminder Settings (with UNUserNotificationCenter)
 struct ReminderSettingsView: View {
