@@ -75,6 +75,11 @@ final class AppState: ObservableObject {
         if hasToken && currentBaby == nil && !skipped {
             isSyncingAfterLogin = true
             Task { await performInitialSync() }
+        } else if hasToken && currentBaby != nil && !skipped {
+            // We have local data, so show it immediately (no loading spinner).
+            // Still run a background sync to pick up changes made on other devices
+            // (e.g. avatar updated on device B should appear on device A at next launch).
+            Task { await SyncManager.shared.pullUpdates() }
         }
     }
 
