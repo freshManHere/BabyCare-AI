@@ -48,12 +48,14 @@ enum GLMError: Error, LocalizedError {
 // MARK: - GLM Client
 // Requests now go through the self-hosted backend (/ai/chat), which proxies to GLM.
 // The GLM API key lives only on the server — never in the iOS app.
+// Non-streaming mode is used to ensure compatibility with ngrok and other proxies
+// that buffer SSE responses and prevent real-time streaming.
 
 final class GLMClient: Sendable {
     nonisolated(unsafe) static let shared = GLMClient()
     private init() {}
 
-    // MARK: - Streaming chat via backend proxy
+    // MARK: - Non-streaming chat via backend proxy
     func streamChat(
         messages: [GLMMessage],
         onDelta: @escaping @MainActor (String) -> Void,
@@ -65,7 +67,6 @@ final class GLMClient: Sendable {
             return
         }
 
-        // Encode only messages — backend adds model/temperature/stream
         struct BackendChatRequest: Encodable {
             let messages: [GLMMessage]
         }
@@ -74,9 +75,7 @@ final class GLMClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // Skip ngrok browser warning page for non-browser clients
         request.setValue("true", forHTTPHeaderField: "ngrok-skip-browser-warning")
-        // Attach JWT from Keychain (safer than UserDefaults)
         if let token = KeychainHelper.load(key: "access_token") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -84,7 +83,7 @@ final class GLMClient: Sendable {
 
         Task {
             do {
-                let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                let (data, response) = try await URLSession.shared.data(for: request)
                 guard let httpResponse = response as? HTTPURLResponse else {
                     await MainActor.run { onError(.unknown) }
                     return
@@ -97,22 +96,12 @@ final class GLMClient: Sendable {
                     return
                 }
 
-                // Parse SSE lines forwarded by the backend
-                for try await line in bytes.lines {
-                    guard line.hasPrefix("data: ") else { continue }
-                    let payload = String(line.dropFirst(6))
-                    guard payload != "[DONE]" else { break }
-                    guard let data = payload.data(using: .utf8) else { continue }
-                    do {
-                        let resp = try JSONDecoder().decode(GLMResponse.self, from: data)
-                        if let delta = resp.choices.first?.delta?.content, !delta.isEmpty {
-                            await MainActor.run { onDelta(delta) }
-                        }
-                    } catch {
-                        // Skip malformed SSE chunks
-                    }
+                struct ChatResponse: Decodable { let content: String }
+                let resp = try JSONDecoder().decode(ChatResponse.self, from: data)
+                await MainActor.run {
+                    onDelta(resp.content)
+                    onComplete()
                 }
-                await MainActor.run { onComplete() }
             } catch {
                 await MainActor.run { onError(.unknown) }
             }
