@@ -7,30 +7,11 @@ struct GLMMessage: Codable {
     let content: String
 }
 
-// MARK: - Response Models
-
-struct GLMResponse: Decodable {
-    let choices: [Choice]
-    struct Choice: Decodable {
-        let message: GLMMessage?
-        let delta: Delta?
-        let finishReason: String?
-        enum CodingKeys: String, CodingKey {
-            case message, delta
-            case finishReason = "finish_reason"
-        }
-    }
-    struct Delta: Decodable {
-        let content: String?
-    }
-}
-
 // MARK: - Error
 
 enum GLMError: Error, LocalizedError {
     case invalidURL
     case httpError(Int, String)
-    case decodingError(Error)
     case unknown
 
     var errorDescription: String? {
@@ -39,7 +20,6 @@ enum GLMError: Error, LocalizedError {
         case .httpError(401, _):       return "登录已过期，请重新登录"
         case .httpError(429, _):       return "请求过于频繁，请稍后再试"
         case .httpError(let c, let m): return "请求失败（\(c)）：\(m)"
-        case .decodingError:           return "响应解析失败，请重试"
         case .unknown:                 return "未知错误，请重试"
         }
     }
