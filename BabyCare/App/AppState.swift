@@ -148,7 +148,13 @@ final class AppState: ObservableObject {
 
             if let local = currentBaby,
                let matched = babies.first(where: { $0.id == local.id }) {
-                currentBaby = matched
+                // If the user has an unconfirmed local save, preserve their avatar
+                // rather than overwriting it with the server's (potentially older) data.
+                var merged = matched
+                if localBabySavedAt(for: local.id) != nil, local.avatarData != nil {
+                    merged.avatarData = local.avatarData
+                }
+                currentBaby = merged
             } else {
                 currentBaby = babies.first
             }
