@@ -298,7 +298,10 @@ struct BabyProfileEditView: View {
                 gender: genderSnapshot
             )
             baby.avatarData = compressedAvatar
+            // Save locally BEFORE dismissing so UserDefaults is always updated
+            // even if the app is suspended before the server push completes.
             appState.currentBaby = baby
+            dismiss()
 
             // Push updated baby profile (including avatar) to server.
             // Use PUT for existing babies to update in place; POST to create new ones.
@@ -309,10 +312,7 @@ struct BabyProfileEditView: View {
                 try? await sync.pushBaby(baby)
             }
         }
-
-        dismiss()
     }
-}
 
 // MARK: - #20 Reminder Settings (with UNUserNotificationCenter)
 struct ReminderSettingsView: View {

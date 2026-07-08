@@ -163,10 +163,15 @@ final class SyncManager {
         } catch { return }  // can't sync without knowing the babies
 
         // Refresh the current baby profile (name, avatar, etc.) from server.
-        // This ensures profile changes made on another device propagate here.
+        // Preserve local avatarData if the server version has none — this
+        // prevents a failed/in-flight push from reverting a locally saved avatar.
         if let appState, let local = appState.currentBaby,
            let matched = babies.first(where: { $0.id == local.id }) {
-            appState.currentBaby = matched
+            var merged = matched
+            if merged.avatarData == nil, local.avatarData != nil {
+                merged.avatarData = local.avatarData
+            }
+            appState.currentBaby = merged
         }
 
         let eventStore = EventStore.shared
