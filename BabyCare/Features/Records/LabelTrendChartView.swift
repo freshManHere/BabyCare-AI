@@ -38,7 +38,7 @@ struct TrendDataPoint: Identifiable {
 // MARK: - Feeding Metric
 enum FeedingMetric: String, CaseIterable, Identifiable {
     case bottle = "奶量(ml)"
-    case breast = "亲嗂(min)"
+    case breast = "亲喂(min)"
     var id: String { rawValue }
 }
 
@@ -186,10 +186,11 @@ struct LabelTrendChartView: View {
 
     private var yAxisLabel: String {
         switch label {
-        case .feeding: return feedingMetric == .bottle ? "奶量(ml)·次" : "亲嗂时长(min)·次"
+        case .feeding: return feedingMetric == .bottle ? "奶量(ml)·次" : "亲喂时长(min)·次"
         case .sleep: return "时长(分钟)"
         case .diaperChange: return "次数"
-        case .outing, .bath, .motorSkill: return "时长(分钟)"
+        case .outing, .motorSkill: return "时长(分钟)"
+        case .bath: return "次数"
         case .symptom, .other: return "次数"
         }
     }
@@ -244,10 +245,13 @@ struct LabelTrendChartView: View {
         case .sleep:
             guard let end = event.endTime else { return 0 }
             return Double(Int(end.timeIntervalSince(event.startTime) / 60))
-        case .outing, .bath, .motorSkill:
+        case .outing, .motorSkill:
             // Bug #42: show duration in minutes instead of count
             guard let end = event.endTime else { return 0 }
             return Double(Int(end.timeIntervalSince(event.startTime) / 60))
+        case .bath:
+            // Bath trend should be event count, not duration
+            return 1
         default:
             return 1
         }
