@@ -175,41 +175,29 @@ struct BabyProfileEditView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var avatarData: Data? = nil
     @State private var showingDeleteConfirm = false
+    @State private var showingAvatarPreview = false
 
     var body: some View {
         NavigationStack {
             Form {
-                // Avatar picker
+                // Avatar preview + picker
                 Section {
-                    HStack {
-                        Spacer()
-                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                            ZStack(alignment: .bottomTrailing) {
-                                if let data = avatarData, let uiImage = UIImage(data: data) {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 80, height: 80)
-                                        .clipShape(Circle())
-                                } else {
-                                    Circle()
-                                        .fill(Color.pink.opacity(0.15))
-                                        .frame(width: 80, height: 80)
-                                        .overlay {
-                                            Text(gender == .female ? "👧" : "👶")
-                                                .font(.system(size: 36))
-                                        }
-                                }
-                                Image(systemName: "camera.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                                    .padding(5)
-                                    .background(Color.pink)
-                                    .clipShape(Circle())
-                            }
+                    VStack(spacing: 10) {
+                        Button {
+                            showingAvatarPreview = true
+                        } label: {
+                            avatarImageView
                         }
-                        Spacer()
+                        .buttonStyle(.plain)
+                        .disabled(avatarData == nil)
+
+                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                            Label(avatarData == nil ? "添加头像" : "更换头像", systemImage: "camera.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(.pink)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
                 }
 
@@ -267,6 +255,30 @@ struct BabyProfileEditView: View {
                     dismiss()
                 }
             }
+            .fullScreenCover(isPresented: $showingAvatarPreview) {
+                if let data = avatarData, let uiImage = UIImage(data: data) {
+                    AvatarPreviewView(image: uiImage)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var avatarImageView: some View {
+        if let data = avatarData, let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 88, height: 88)
+                .clipShape(Circle())
+        } else {
+            Circle()
+                .fill(Color.pink.opacity(0.15))
+                .frame(width: 88, height: 88)
+                .overlay {
+                    Text(gender == .female ? "👧" : "👶")
+                        .font(.system(size: 40))
+                }
         }
     }
 
@@ -315,6 +327,93 @@ struct BabyProfileEditView: View {
             {
                 appState.currentBaby = serverBaby
                 appState.setLocalBabySavedAt(nil, for: babyId)
+            }
+        }
+    }
+}
+
+// MARK: - Avatar Full-Screen Preview
+private struct AvatarPreviewView: View {
+    let image: UIImage
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var scale: CGFloat = 1
+    @State private var lastScale: CGFloat = 1
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
+    private let minScale: CGFloat = 1
+    private let maxScale: CGFloat = 5
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding()
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(magnifyGesture.simultaneously(with: dragGesture))
+                .onTapGesture(count: 2) { toggleZoom() }
+                .onTapGesture(count: 1) {
+                    if scale <= minScale { dismiss() }
+                }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.white, .black.opacity(0.4))
+            }
+            .padding()
+        }
+    }
+
+    private var magnifyGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                scale = min(max(lastScale * value, minScale), maxScale)
+            }
+            .onEnded { _ in
+                lastScale = scale
+                if scale <= minScale {
+                    withAnimation(.spring()) {
+                        scale = minScale
+                        lastScale = minScale
+                        offset = .zero
+                        lastOffset = .zero
+                    }
+                }
+            }
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                guard scale > minScale else { return }
+                offset = CGSize(
+                    width: lastOffset.width + value.translation.width,
+                    height: lastOffset.height + value.translation.height
+                )
+            }
+            .onEnded { _ in
+                lastOffset = offset
+            }
+    }
+
+    private func toggleZoom() {
+        withAnimation(.spring()) {
+            if scale > minScale {
+                scale = minScale
+                lastScale = minScale
+                offset = .zero
+                lastOffset = .zero
+            } else {
+                scale = 2.5
+                lastScale = 2.5
             }
         }
     }

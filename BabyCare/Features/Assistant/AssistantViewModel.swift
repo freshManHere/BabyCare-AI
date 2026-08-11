@@ -18,7 +18,7 @@ final class AssistantViewModel {
         messages.append(ChatMessage(role: .user, text: trimmed))
         isLoading = true
 
-        let systemPrompt = AssistantContextBuilder.buildSystemPrompt(baby: baby, store: store)
+        let systemPrompt = AssistantContextBuilder.buildSystemPrompt(baby: baby, store: store, growthStore: GrowthStore.shared)
         var glmMessages: [GLMMessage] = [GLMMessage(role: "system", content: systemPrompt)]
         // Truncate each history message to 2000 chars to avoid oversized payloads
         // (long AI responses can accumulate and exceed the server body limit).

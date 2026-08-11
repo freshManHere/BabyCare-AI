@@ -4,7 +4,7 @@ import Foundation
 enum AssistantContextBuilder {
 
     @MainActor
-    static func buildSystemPrompt(baby: Baby?, store: EventStore) -> String {
+    static func buildSystemPrompt(baby: Baby?, store: EventStore, growthStore: GrowthStore = .shared) -> String {
         var lines: [String] = []
 
         lines.append("""
@@ -27,6 +27,34 @@ enum AssistantContextBuilder {
         lines.append("- 昵称：\(baby.nickname)")
         lines.append("- 性别：\(baby.gender.rawValue)")
         lines.append("- 月龄：\(baby.ageDescription)")
+
+        // Growth (height/weight) history — needed to judge whether growth is on track
+        let growthRecords = growthStore.records(
+            for: baby.id,
+            from: Date.distantPast,
+            to: Date()
+        )
+        if let latest = growthRecords.last {
+            var latestParts: [String] = []
+            if let h = latest.heightCm { latestParts.append("身高\(String(format: "%.1f", h))cm") }
+            if let w = latest.weightKg { latestParts.append("体重\(String(format: "%.2f", w))kg") }
+            if !latestParts.isEmpty {
+                lines.append("- 最新身高体重（\(latest.dateLabel)）：\(latestParts.joined(separator: "，"))")
+            }
+            // Include up to the last 6 records so the AI can see the growth trend
+            let history = growthRecords.suffix(6)
+            if history.count > 1 {
+                let historyStr = history.map { record -> String in
+                    var parts: [String] = []
+                    if let h = record.heightCm { parts.append("身高\(String(format: "%.1f", h))cm") }
+                    if let w = record.weightKg { parts.append("体重\(String(format: "%.2f", w))kg") }
+                    return "\(record.dateLabel)：\(parts.joined(separator: "，"))"
+                }.joined(separator: "；")
+                lines.append("- 生长记录趋势：\(historyStr)")
+            }
+        } else {
+            lines.append("- 身高体重：暂无记录")
+        }
 
         let cal = Calendar.current
         let now = Date()

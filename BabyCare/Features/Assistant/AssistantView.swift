@@ -9,7 +9,7 @@ struct AssistantView: View {
     private var viewModel: AssistantViewModel { appState.assistantViewModel }
 
     private let quickQuestions = [
-        "宝宝一直哭怎么办",
+        "宝宝发育正常吗?",
         "吐奶是否正常",
         "今天睡得怎么样",
         "发烧怎么办",

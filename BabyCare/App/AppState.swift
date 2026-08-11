@@ -65,8 +65,10 @@ final class AppState: ObservableObject {
         signOutObserver = NotificationCenter.default.addObserver(
             forName: .userDidSignOut, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.clearLocalState()
-            self?.isAuthenticated = false
+            Task { @MainActor [weak self] in
+                self?.clearLocalState()
+                self?.isAuthenticated = false
+            }
         }
 
         // If we have a token but no local baby data (e.g. after reinstall from Xcode

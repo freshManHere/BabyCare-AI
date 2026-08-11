@@ -32,7 +32,7 @@ enum GLMError: Error, LocalizedError {
 // that buffer SSE responses and prevent real-time streaming.
 
 final class GLMClient: Sendable {
-    nonisolated(unsafe) static let shared = GLMClient()
+    static let shared = GLMClient()
     private init() {}
 
     // MARK: - Non-streaming chat via backend proxy

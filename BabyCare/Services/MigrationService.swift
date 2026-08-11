@@ -62,7 +62,7 @@ final class MigrationService: ObservableObject {
 
             // Step 3: push growth records
             let growth = growthStore.records
-            if !growth.isEmpty, let baby {
+            if !growth.isEmpty {
                 statusMessage = "上传成长记录（\(growth.count) 条）…"
                 for record in growth {
                     try await syncService.pushGrowthRecord(record)
