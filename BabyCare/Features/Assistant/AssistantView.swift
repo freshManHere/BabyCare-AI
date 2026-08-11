@@ -4,6 +4,7 @@ struct AssistantView: View {
     @EnvironmentObject private var appState: AppState
     @State private var inputText = ""
     @State private var showAPIKeyAlert = false
+    @FocusState private var isInputFocused: Bool
 
     private var viewModel: AssistantViewModel { appState.assistantViewModel }
 
@@ -25,9 +26,19 @@ struct AssistantView: View {
                 inputBar
             }
             .background(Color(.systemGroupedBackground))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isInputFocused = false
+            }
             .navigationTitle("AI 助手")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") {
+                        isInputFocused = false
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink {
                         AISettingsView()
@@ -76,6 +87,7 @@ struct AssistantView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: viewModel.messages.count) { _, _ in
                 withAnimation {
                     if let last = viewModel.messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -117,6 +129,11 @@ struct AssistantView: View {
         HStack(spacing: 10) {
             TextField("输入问题...", text: $inputText, axis: .vertical)
                 .lineLimit(1...4)
+                .focused($isInputFocused)
+                .submitLabel(.send)
+                .onSubmit {
+                    sendMessage(inputText)
+                }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Color(.systemGray6))
@@ -145,6 +162,7 @@ struct AssistantView: View {
             return
         }
         inputText = ""
+        isInputFocused = false
         viewModel.sendMessage(trimmed, baby: appState.currentBaby)
     }
 }

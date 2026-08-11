@@ -270,6 +270,7 @@ struct BabyProfileEditView: View {
         }
     }
 
+    @MainActor
     private func save() {
         let name = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
         let babyId = appState.currentBaby?.id ?? UUID()
