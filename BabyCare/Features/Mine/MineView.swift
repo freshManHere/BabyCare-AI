@@ -183,16 +183,18 @@ struct BabyProfileEditView: View {
                 // Avatar preview + picker
                 Section {
                     VStack(spacing: 10) {
+                        let hasAvatar = avatarData != nil
+
                         Button {
                             showingAvatarPreview = true
                         } label: {
                             avatarImageView
                         }
                         .buttonStyle(.plain)
-                        .disabled(avatarData == nil)
+                        .disabled(!hasAvatar)
 
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                            Label(avatarData == nil ? "添加头像" : "更换头像", systemImage: "camera.fill")
+                            Label(hasAvatar ? "更换头像" : "添加头像", systemImage: "camera.fill")
                                 .font(.subheadline)
                                 .foregroundStyle(.pink)
                         }
