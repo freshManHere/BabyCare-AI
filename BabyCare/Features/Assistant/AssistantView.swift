@@ -108,7 +108,7 @@ struct AssistantView: View {
             HStack(spacing: 8) {
                 ForEach(quickQuestions, id: \.self) { question in
                     Button(question) {
-                        sendMessage(question)
+                        sendMessage(question, aiQuery: aiQuery(for: question))
                     }
                     .font(.caption)
                     .padding(.horizontal, 10)
@@ -154,7 +154,7 @@ struct AssistantView: View {
     }
 
     // MARK: - Send
-    private func sendMessage(_ text: String) {
+    private func sendMessage(_ text: String, aiQuery: String? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         guard AIConfig.hasAPIKey else {
@@ -163,7 +163,18 @@ struct AssistantView: View {
         }
         inputText = ""
         isInputFocused = false
-        viewModel.sendMessage(trimmed, baby: appState.currentBaby)
+        viewModel.sendMessage(aiQuery ?? trimmed, baby: appState.currentBaby, displayText: trimmed)
+    }
+
+    /// Some quick-question chips need a more detailed instruction sent to the AI
+    /// than what's shown to the user in the chat bubble.
+    private func aiQuery(for question: String) -> String? {
+        switch question {
+        case "宝宝发育正常吗?":
+            return "请结合宝宝当前的月龄，对比同月龄宝宝的身高、体重发育参考标准，判断宝宝目前处于什么发育水平（偏矮/偏轻/正常/偏高/偏重等），在这个身高下，体重是否正常。并说明在喂养、睡眠、护理等方面需要注意什么。"
+        default:
+            return nil
+        }
     }
 }
 

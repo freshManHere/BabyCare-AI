@@ -11,21 +11,27 @@ final class AssistantViewModel {
 
     private let store = EventStore.shared
 
-    func sendMessage(_ text: String, baby: Baby?) {
+    func sendMessage(_ text: String, baby: Baby?, displayText: String? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isLoading else { return }
 
-        messages.append(ChatMessage(role: .user, text: trimmed))
+        // The chat bubble shows the short, user-facing question (displayText),
+        // while the full/augmented instruction (trimmed) is what's actually sent to the AI.
+        messages.append(ChatMessage(role: .user, text: displayText ?? trimmed))
         isLoading = true
 
         let systemPrompt = AssistantContextBuilder.buildSystemPrompt(baby: baby, store: store, growthStore: GrowthStore.shared)
         var glmMessages: [GLMMessage] = [GLMMessage(role: "system", content: systemPrompt)]
         // Truncate each history message to 2000 chars to avoid oversized payloads
         // (long AI responses can accumulate and exceed the server body limit).
-        glmMessages += messages.suffix(10).map {
+        // Use the display history for prior turns, but send the full augmented
+        // query (trimmed) for the message just appended above (excluded via dropLast).
+        glmMessages += messages.dropLast(1).suffix(9).map {
             let truncated = $0.text.count > 2000 ? String($0.text.prefix(2000)) + "…" : $0.text
             return GLMMessage(role: $0.role == .user ? "user" : "assistant", content: truncated)
         }
+        let truncatedQuery = trimmed.count > 2000 ? String(trimmed.prefix(2000)) + "…" : trimmed
+        glmMessages.append(GLMMessage(role: "user", content: truncatedQuery))
 
         let placeholder = ChatMessage(role: .assistant, text: "")
         messages.append(placeholder)
