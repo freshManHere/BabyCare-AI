@@ -34,6 +34,7 @@ struct GrowthChartView: View {
     @State private var timeRange: GrowthTimeRange = .month3
     @State private var metric: GrowthMetric = .weight
     @State private var showingAdd = false
+    @State private var editingRecord: GrowthRecord?
 
     private var baby: Baby? { appState.currentBaby }
 
@@ -96,6 +97,10 @@ struct GrowthChartView: View {
             }
             .sheet(isPresented: $showingAdd) {
                 AddGrowthView()
+                    .environmentObject(appState)
+            }
+            .sheet(item: $editingRecord) { record in
+                AddGrowthView(editingRecord: record)
                     .environmentObject(appState)
             }
         }
@@ -168,24 +173,33 @@ struct GrowthChartView: View {
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(chartData.reversed()) { record in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(record.dateLabel)
-                                    .font(.subheadline.bold())
-                                if metric == .height, let h = record.heightCm {
-                                    Text(String(format: "%.1f cm", h))
-                                        .font(.title3.bold())
-                                        .foregroundStyle(.pink)
-                                } else if metric == .weight, let w = record.weightKg {
-                                    Text(String(format: "%.2f kg", w))
-                                        .font(.title3.bold())
-                                        .foregroundStyle(.pink)
+                        Button {
+                            editingRecord = record
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(record.dateLabel)
+                                        .font(.subheadline.bold())
+                                    if metric == .height, let h = record.heightCm {
+                                        Text(String(format: "%.1f cm", h))
+                                            .font(.title3.bold())
+                                            .foregroundStyle(.pink)
+                                    } else if metric == .weight, let w = record.weightKg {
+                                        Text(String(format: "%.2f kg", w))
+                                            .font(.title3.bold())
+                                            .foregroundStyle(.pink)
+                                    }
                                 }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
                             }
-                            Spacer()
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
+                        .buttonStyle(.plain)
                         Divider().padding(.leading, 16)
                     }
                 }

@@ -39,6 +39,19 @@ final class GrowthStore {
         save()
     }
 
+    /// Updates a record in place, preserving its id (used for editing history entries).
+    func update(_ record: GrowthRecord) {
+        guard let idx = records.firstIndex(where: { $0.id == record.id }) else {
+            upsert(record)
+            return
+        }
+        var updated = record
+        updated.date = Calendar.current.startOfDay(for: record.date)
+        records[idx] = updated
+        save()
+        SyncManager.shared.enqueueGrowthRecord(updated)
+    }
+
     func delete(_ record: GrowthRecord) {
         records.removeAll { $0.id == record.id }
         save()
