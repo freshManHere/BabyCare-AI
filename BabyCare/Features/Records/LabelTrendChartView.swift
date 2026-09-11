@@ -384,6 +384,7 @@ struct LabelTrendChartView: View {
         case .diaperChange: return "次数"
         case .outing, .motorSkill: return "时长(分钟)"
         case .bath: return "次数"
+        case .weaning: return "次数"
         case .symptom, .other: return "次数"
         }
     }

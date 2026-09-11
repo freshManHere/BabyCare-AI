@@ -9,6 +9,7 @@ enum EventLabel: String, Codable, CaseIterable, Identifiable {
     case bath = "洗澡"
     case motorSkill = "大运动"
     case symptom = "症状"
+    case weaning = "辅食"
     case other = "其他"
 
     var id: String { rawValue }
@@ -22,6 +23,7 @@ enum EventLabel: String, Codable, CaseIterable, Identifiable {
         case .bath: return "shower.fill"
         case .motorSkill: return "figure.roll"
         case .symptom: return "thermometer.medium"
+        case .weaning: return "fork.knife"
         case .other: return "ellipsis.circle.fill"
         }
     }
@@ -35,6 +37,7 @@ enum EventLabel: String, Codable, CaseIterable, Identifiable {
         case .bath: return "BathColor"
         case .motorSkill: return "MotorSkillColor"
         case .symptom: return "SymptomColor"
+        case .weaning: return "WeaningColor"
         case .other: return "OtherColor"
         }
     }
@@ -63,6 +66,7 @@ enum EventPayload: Codable {
     case bath(BathPayload)
     case motorSkill(MotorSkillPayload)
     case symptom(SymptomPayload)
+    case weaning(WeaningPayload)
     case other(String)
 
     // MARK: Custom Codable
@@ -78,6 +82,7 @@ enum EventPayload: Codable {
         case bath
         case motorSkill, motor_skill
         case symptom
+        case weaning
         case other
     }
 
@@ -101,6 +106,8 @@ enum EventPayload: Codable {
             self = .motorSkill(try container.decode(AssocWrapper<MotorSkillPayload>.self, forKey: .motor_skill).value)
         } else if container.contains(.symptom) {
             self = .symptom(try container.decode(AssocWrapper<SymptomPayload>.self,   forKey: .symptom).value)
+        } else if container.contains(.weaning) {
+            self = .weaning(try container.decode(AssocWrapper<WeaningPayload>.self,   forKey: .weaning).value)
         } else if container.contains(.other) {
             self = .other(try container.decode(String.self, forKey: .other))
         } else {
@@ -118,6 +125,7 @@ enum EventPayload: Codable {
         case .bath(let p):         try container.encode(AssocWrapper(p), forKey: .bath)
         case .motorSkill(let p):   try container.encode(AssocWrapper(p), forKey: .motor_skill)
         case .symptom(let p):      try container.encode(AssocWrapper(p), forKey: .symptom)
+        case .weaning(let p):      try container.encode(AssocWrapper(p), forKey: .weaning)
         case .other(let s):        try container.encode(s, forKey: .other)
         }
     }
@@ -256,5 +264,33 @@ struct SymptomPayload: Codable {
         case mild = "轻微"
         case moderate = "中等"
         case severe = "严重"
+    }
+}
+
+// MARK: - Weaning (辅食)
+struct WeaningPayload: Codable {
+    var foodName: String = ""
+    var texture: Texture = .thinPaste
+    var amount: String = ""
+    var isAllergyCleared: Bool = false
+    var isAllergyTesting: Bool = false
+    var reaction: Reaction = .none
+
+    enum Texture: String, Codable, CaseIterable {
+        case liquid = "流水状"
+        case thinPaste = "稀糊状"
+        case thickPaste = "稠糊状"
+        case mashed = "泥状"
+        case minced = "碎末状"
+        case chunks = "小块状"
+    }
+
+    enum Reaction: String, Codable, CaseIterable {
+        case none = "无异常"
+        case rash = "皮疹"
+        case vomiting = "呕吐"
+        case diarrhea = "腹泻"
+        case constipation = "便秘"
+        case other = "其他"
     }
 }

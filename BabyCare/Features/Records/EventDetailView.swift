@@ -226,6 +226,22 @@ struct EventDetailView: View {
                     }
                 }
             }
+        } else if event.label == .weaning {
+            NavigationStack {
+                WeaningFormView(existingEvent: event) { updated in
+                    store.update(updated)
+                    showingEdit = false
+                    dismiss()
+                }
+                .environmentObject(appState)
+                .navigationTitle("编辑辅食记录")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") { showingEdit = false }
+                    }
+                }
+            }
         } else {
             // Generic edit: for now just show a read-only note about future support
             NavigationStack {

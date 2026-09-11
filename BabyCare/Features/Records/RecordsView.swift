@@ -9,6 +9,9 @@ struct RecordsView: View {
     @State private var showingAddRecord = false
     @State private var filterScrollProxy: ScrollViewProxy? = nil
     @State private var navigationPath = NavigationPath()
+    /// State for the weaning (辅食) calendar, shown instead of the trend chart for that label.
+    @State private var weaningMonth: Date = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
+    @State private var weaningSelectedDay: Date? = nil
 
     private var baby: Baby? { appState.currentBaby }
 
@@ -41,13 +44,60 @@ struct RecordsView: View {
             .sorted { $0.date > $1.date }
     }
 
+    // MARK: - Weaning Calendar Data
+    /// All 辅食 events within the displayed calendar month.
+    private var weaningMonthEvents: [BabyEvent] {
+        guard let baby else { return [] }
+        let cal = Calendar.current
+        guard let interval = cal.dateInterval(of: .month, for: weaningMonth) else { return [] }
+        let end = interval.end.addingTimeInterval(-1)
+        return store.events(for: .weaning, babyId: baby.id, from: interval.start, to: end)
+    }
+
+    /// Weaning events to list below the calendar: the selected day, or the whole month.
+    private var weaningDisplayEvents: [BabyEvent] {
+        if let day = weaningSelectedDay {
+            return weaningMonthEvents
+                .filter { Calendar.current.isDate($0.startTime, inSameDayAs: day) }
+                .sorted { $0.startTime > $1.startTime }
+        }
+        return weaningMonthEvents.sorted { $0.startTime > $1.startTime }
+    }
+
+    private var weaningEventsByDay: [(date: Date, events: [BabyEvent])] {
+        let cal = Calendar.current
+        var groups: [Date: [BabyEvent]] = [:]
+        for event in weaningDisplayEvents {
+            let day = cal.startOfDay(for: event.startTime)
+            groups[day, default: []].append(event)
+        }
+        return groups
+            .map { (date: $0.key, events: $0.value) }
+            .sorted { $0.date > $1.date }
+    }
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 labelFilterBar
                 Divider()
-                // Show trend chart when a specific label is selected (#26)
-                if let label = selectedLabel {
+                // Weaning uses a calendar instead of a trend chart (#rich history browsing);
+                // other labels keep the trend chart (#26).
+                if selectedLabel == .weaning {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            WeaningCalendarView(
+                                displayedMonth: $weaningMonth,
+                                selectedDay: $weaningSelectedDay,
+                                events: weaningMonthEvents
+                            )
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            Divider()
+                            weaningRecordsList
+                        }
+                    }
+                } else if let label = selectedLabel {
                     ScrollView {
                         VStack(spacing: 0) {
                             LabelTrendChartView(label: label, timeRange: $trendTimeRange)
@@ -245,6 +295,52 @@ struct RecordsView: View {
             } else {
                 LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
                     ForEach(eventsByDay, id: \.date) { group in
+                        Section {
+                            ForEach(group.events) { event in
+                                NavigationLink {
+                                    EventDetailView(event: event)
+                                } label: {
+                                    EventRowView(event: event)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 6)
+                                }
+                                .buttonStyle(.plain)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        store.delete(event)
+                                    } label: {
+                                        Label("删除", systemImage: "trash")
+                                    }
+                                }
+                                Divider().padding(.leading, 72)
+                            }
+                        } header: {
+                            dayHeader(group.date)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                                .background(Color(.systemGroupedBackground))
+                        }
+                    }
+                }
+                .background(Color(.systemBackground))
+            }
+        }
+    }
+
+    // MARK: - Weaning Records List (below the calendar)
+    private var weaningRecordsList: some View {
+        Group {
+            if weaningDisplayEvents.isEmpty {
+                ContentUnavailableView(
+                    "暂无记录",
+                    systemImage: "tray",
+                    description: Text(weaningSelectedDay != nil ? "这一天没有辅食记录" : "本月没有辅食记录")
+                )
+                .frame(height: 200)
+            } else {
+                LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                    ForEach(weaningEventsByDay, id: \.date) { group in
                         Section {
                             ForEach(group.events) { event in
                                 NavigationLink {

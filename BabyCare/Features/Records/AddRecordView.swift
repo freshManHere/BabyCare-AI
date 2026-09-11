@@ -104,6 +104,11 @@ struct AddRecordView: View {
                 store.add(event)
                 dismiss()
             }
+        case .weaning:
+            WeaningFormView { event in
+                store.add(event)
+                dismiss()
+            }
         default:
             GenericFormView(label: selectedLabel) { event in
                 store.add(event)

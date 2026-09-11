@@ -44,6 +44,13 @@ extension BabyEvent {
             let types = p.types.joined(separator: "、")
             let prefix = p.isHighRisk ? "⚠️ " : ""
             return "\(prefix)\(types.isEmpty ? p.severity.rawValue : types)"
+        case .weaning(let p):
+            var parts = [p.texture.rawValue]
+            if !p.amount.isEmpty { parts.append(p.amount) }
+            if p.isAllergyCleared { parts.append("已排敏") }
+            else if p.isAllergyTesting { parts.append("排敏中") }
+            let name = p.foodName.isEmpty ? "辅食" : p.foodName
+            return "\(name) · \(parts.joined(separator: " · "))"
         case .other(let text):
             return text.isEmpty ? "其他记录" : text
         }

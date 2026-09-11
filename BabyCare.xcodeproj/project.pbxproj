@@ -54,6 +54,8 @@
 		SS0006YY0006SS0006YY0006 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TT0006ZZ0006TT0006ZZ0006 /* AuthView.swift */; };
 		AA0006BB0006AA0006BB0006 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0006CC0006BB0006CC0006 /* AISettingsView.swift */; };
 		DM0001EE0001DM0001EE0001 /* DataMigrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DM0002EE0002DM0002EE0002 /* DataMigrationView.swift */; };
+		WF0001EE0001WF0001EE0001 /* WeaningFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WF0002EE0002WF0002EE0002 /* WeaningFormView.swift */; };
+		WC0001EE0001WC0001EE0001 /* WeaningCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WC0002EE0002WC0002EE0002 /* WeaningCalendarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -124,6 +126,8 @@
 		EFA6C3AD4CAA003E9A5A9639 /* SymptomFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymptomFormView.swift; sourceTree = "<group>"; };
 		F5BCAABEF97112C9C626C06E /* OutingFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutingFormView.swift; sourceTree = "<group>"; };
 		F708B100A76B0A3C7762E0B7 /* BabyCareUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabyCareUITests.swift; sourceTree = "<group>"; };
+		WF0002EE0002WF0002EE0002 /* WeaningFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaningFormView.swift; sourceTree = "<group>"; };
+		WC0002EE0002WC0002EE0002 /* WeaningCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaningCalendarView.swift; sourceTree = "<group>"; };
 		F9834F014D6790281DFC3D6A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -160,6 +164,7 @@
 				F5BCAABEF97112C9C626C06E /* OutingFormView.swift */,
 				231A1DFB3E0F7F79D96F0F14 /* SleepFormView.swift */,
 				EFA6C3AD4CAA003E9A5A9639 /* SymptomFormView.swift */,
+				WF0002EE0002WF0002EE0002 /* WeaningFormView.swift */,
 			);
 			path = Forms;
 			sourceTree = "<group>";
@@ -308,6 +313,7 @@
 				53F6269629B95AA0951335CC /* EventExtensions.swift */,
 				E79055C31D0D6AB73D32C4C1 /* LabelTrendChartView.swift */,
 				48C0D0776E81F02BA11FF33C /* RecordsView.swift */,
+				WC0002EE0002WC0002EE0002 /* WeaningCalendarView.swift */,
 				286B8311E2F1676EF03DEDBE /* Forms */,
 			);
 			path = Records;
@@ -477,6 +483,8 @@
 				A1B2C3D4E5F6A1B2C3D4E5F6 /* DismissingToggle.swift in Sources */,
 				88E16775844D43A73F9B9C30 /* SleepFormView.swift in Sources */,
 				DD2E490201DA8B9EE20B2E3F /* SymptomFormView.swift in Sources */,
+				WF0001EE0001WF0001EE0001 /* WeaningFormView.swift in Sources */,
+				WC0001EE0001WC0001EE0001 /* WeaningCalendarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
