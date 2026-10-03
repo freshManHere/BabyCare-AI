@@ -7,7 +7,13 @@ import Foundation
 @MainActor
 final class MigrationService: ObservableObject {
 
-    private static let migratedKey = "local_data_migrated_v1"
+    /// Namespaced by the current user id (same convention as SyncManager) so that
+    /// migrating one account's local data doesn't permanently hide the entry for
+    /// a different account signed into later on the same device.
+    private static var migratedKey: String {
+        let userId = SyncManager.shared.currentUserId
+        return userId.isEmpty ? "local_data_migrated_v1" : "local_data_migrated_v1_\(userId)"
+    }
     static var needsMigration: Bool {
         !UserDefaults.standard.bool(forKey: migratedKey)
     }

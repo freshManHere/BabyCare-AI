@@ -20,6 +20,8 @@ final class EventStore {
 
     // MARK: - CRUD
     func add(_ event: BabyEvent) {
+        var event = event
+        event.updatedAt = Date()
         events.append(event)
         events.sort { $0.startTime > $1.startTime }
         save()
@@ -32,8 +34,23 @@ final class EventStore {
         SyncManager.shared.enqueueDeleteEvent(babyId: event.babyId, eventId: event.id)
     }
 
+    /// Applies a soft-delete pulled from the server.
+    /// If the local copy was edited more recently than the deletion, keep it and
+    /// re-push it instead, so the "undo via edit" wins over a stale remote delete.
+    func deleteFromSync(_ event: BabyEvent) {
+        guard let local = events.first(where: { $0.id == event.id }) else { return }
+        guard event.updatedAt >= local.updatedAt else {
+            SyncManager.shared.enqueueEvent(local)
+            return
+        }
+        events.removeAll { $0.id == event.id }
+        save()
+    }
+
     func update(_ event: BabyEvent) {
         if let index = events.firstIndex(where: { $0.id == event.id }) {
+            var event = event
+            event.updatedAt = Date()
             events[index] = event
             events.sort { $0.startTime > $1.startTime }
             save()
@@ -41,9 +58,15 @@ final class EventStore {
         }
     }
 
-    /// Insert or update an event by id (used for sync merges)
+    /// Insert or update an event by id (used for sync merges from the server).
+    /// If the local copy was edited more recently than the incoming one, keep local
+    /// and re-push it so the server eventually catches up instead of losing the edit.
     func upsert(_ event: BabyEvent) {
         if let index = events.firstIndex(where: { $0.id == event.id }) {
+            guard event.updatedAt >= events[index].updatedAt else {
+                SyncManager.shared.enqueueEvent(events[index])
+                return
+            }
             events[index] = event
         } else {
             events.append(event)

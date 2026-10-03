@@ -32,6 +32,7 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
             }
+            .refreshable { await SyncManager.shared.syncNow() }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)

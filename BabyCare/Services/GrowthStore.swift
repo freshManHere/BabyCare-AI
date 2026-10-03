@@ -24,15 +24,23 @@ final class GrowthStore {
         if let idx = records.firstIndex(where: {
             $0.babyId == record.babyId && cal.startOfDay(for: $0.date) == day
         }) {
+            // Local edit is newer than this server snapshot — keep local and re-push
+            // so the server eventually catches up instead of silently losing the edit.
+            if syncOnly, records[idx].updatedAt > record.updatedAt {
+                SyncManager.shared.enqueueGrowthRecord(records[idx])
+                return
+            }
             var updated = records[idx]
             updated.date = day
             if let h = record.heightCm { updated.heightCm = h }
             if let w = record.weightKg { updated.weightKg = w }
+            updated.updatedAt = syncOnly ? record.updatedAt : Date()
             records[idx] = updated
             if !syncOnly { SyncManager.shared.enqueueGrowthRecord(updated) }
         } else {
             var new = record
             new.date = day
+            if !syncOnly { new.updatedAt = Date() }
             records.append(new)
             if !syncOnly { SyncManager.shared.enqueueGrowthRecord(new) }
         }
@@ -47,6 +55,7 @@ final class GrowthStore {
         }
         var updated = record
         updated.date = Calendar.current.startOfDay(for: record.date)
+        updated.updatedAt = Date()
         records[idx] = updated
         save()
         SyncManager.shared.enqueueGrowthRecord(updated)

@@ -97,6 +97,7 @@ struct RecordsView: View {
                             weaningRecordsList
                         }
                     }
+                    .refreshable { await SyncManager.shared.syncNow() }
                 } else if let label = selectedLabel {
                     ScrollView {
                         VStack(spacing: 0) {
@@ -108,6 +109,7 @@ struct RecordsView: View {
                             lazyTimelineList
                         }
                     }
+                    .refreshable { await SyncManager.shared.syncNow() }
                 } else {
                     groupedTimelineList
                 }
@@ -259,6 +261,7 @@ struct RecordsView: View {
                     }
                 }
                 .listStyle(.plain)
+                .refreshable { await SyncManager.shared.syncNow() }
             }
         }
     }

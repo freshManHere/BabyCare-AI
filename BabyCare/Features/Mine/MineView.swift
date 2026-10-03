@@ -8,10 +8,12 @@ struct MineView: View {
     @State private var showingBabyProfile = false
     @State private var showingMigration = false
     @State private var showMigrationConfirm = false
+    @State private var isManualSyncing = false
 
     private var localEventCount: Int { EventStore.shared.events.count }
+    private var localRecordCount: Int { EventStore.shared.events.count + GrowthStore.shared.records.count }
     private var showMigrationEntry: Bool {
-        APIClient.shared.isAuthenticated && MigrationService.needsMigration && localEventCount > 0
+        APIClient.shared.isAuthenticated && MigrationService.needsMigration && localRecordCount > 0
     }
 
     var body: some View {
@@ -19,6 +21,16 @@ struct MineView: View {
             List {
                 Section {
                     babyProfileRow
+                }
+
+                if APIClient.shared.isAuthenticated {
+                    Section {
+                        syncStatusRow
+                    } footer: {
+                        if SyncManager.shared.pendingCount > 0 {
+                            Text("有 \(SyncManager.shared.pendingCount) 条记录待上传，服务器恢复后会自动重试")
+                        }
+                    }
                 }
 
                 Section("功能") {
@@ -99,7 +111,7 @@ struct MineView: View {
                     .environmentObject(appState)
             }
             .confirmationDialog(
-                "将本地 \(localEventCount) 条记录同步到服务端",
+                "将本地 \(localRecordCount) 条记录同步到服务端",
                 isPresented: $showMigrationConfirm,
                 titleVisibility: .visible
             ) {
@@ -109,6 +121,40 @@ struct MineView: View {
                 Text("数据将上传到你的账户，本地数据保留不删除。")
             }
         }
+    }
+
+    private var syncStatusRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("数据同步")
+                    .font(.body)
+                Text(syncStatusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if isManualSyncing || SyncManager.shared.isSyncing {
+                ProgressView()
+            } else {
+                Button("立即同步") {
+                    Task {
+                        isManualSyncing = true
+                        await SyncManager.shared.syncNow()
+                        isManualSyncing = false
+                    }
+                }
+                .font(.subheadline)
+                .buttonStyle(.borderless)
+                .tint(.pink)
+            }
+        }
+    }
+
+    private var syncStatusText: String {
+        guard let date = SyncManager.shared.lastSyncDate else { return "尚未同步" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return "上次同步：\(formatter.localizedString(for: date, relativeTo: Date()))"
     }
 
     private var babyProfileRow: some View {

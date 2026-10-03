@@ -53,8 +53,59 @@ struct BabyEvent: Identifiable, Codable {
     var note: String = ""
     var payload: EventPayload
     var createdAt: Date = Date()
+    /// Last local/server modification time — used to resolve multi-device conflicts (newer wins).
+    var updatedAt: Date = Date()
     /// Set by the backend for soft-deleted events returned via /sync
     var deletedAt: Date? = nil
+
+    init(id: UUID = UUID(), babyId: UUID, label: EventLabel, startTime: Date, endTime: Date? = nil,
+         note: String = "", payload: EventPayload, createdAt: Date = Date(), updatedAt: Date = Date(),
+         deletedAt: Date? = nil) {
+        self.id = id
+        self.babyId = babyId
+        self.label = label
+        self.startTime = startTime
+        self.endTime = endTime
+        self.note = note
+        self.payload = payload
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, babyId, label, startTime, endTime, note, payload, createdAt, updatedAt, deletedAt
+    }
+
+    // Custom decode so locally-persisted JSON from before `updatedAt` existed
+    // (missing the key entirely) still decodes instead of silently wiping the store.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        babyId = try c.decode(UUID.self, forKey: .babyId)
+        label = try c.decode(EventLabel.self, forKey: .label)
+        startTime = try c.decode(Date.self, forKey: .startTime)
+        endTime = try c.decodeIfPresent(Date.self, forKey: .endTime)
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        payload = try c.decode(EventPayload.self, forKey: .payload)
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(babyId, forKey: .babyId)
+        try c.encode(label, forKey: .label)
+        try c.encode(startTime, forKey: .startTime)
+        try c.encodeIfPresent(endTime, forKey: .endTime)
+        try c.encode(note, forKey: .note)
+        try c.encode(payload, forKey: .payload)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(updatedAt, forKey: .updatedAt)
+        try c.encodeIfPresent(deletedAt, forKey: .deletedAt)
+    }
 }
 
 // MARK: - Event Payload (Type-safe union)

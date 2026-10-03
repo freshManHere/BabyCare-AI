@@ -200,7 +200,7 @@ final class SyncManager {
                 let since = lastSyncDateEvents ?? Date(timeIntervalSince1970: 0)
                 let updatedEvents = try await sync.syncEvents(babyId: baby.id, since: since)
                 for event in updatedEvents {
-                    if event.deletedAt != nil { eventStore.delete(event) }
+                    if event.deletedAt != nil { eventStore.deleteFromSync(event) }
                     else { eventStore.upsert(event) }
                 }
             } catch {
@@ -225,16 +225,50 @@ final class SyncManager {
         if growthAllSucceeded { lastSyncDateGrowth = Date() }
     }
 
+    /// Push pending writes then pull remote changes. Call this for any
+    /// user- or lifecycle-triggered sync attempt (foreground, manual button, timer).
+    func syncNow() async {
+        await drainQueue()
+        await pullUpdates()
+    }
+
     // MARK: - Foreground trigger
     private func observeForeground() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
-                await self?.drainQueue()    // push pending local writes
-                await self?.pullUpdates()   // pull remote changes
+            Task { @MainActor in await self?.syncNow() }
+        }
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in self?.startPeriodicRetry() }
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in self?.stopPeriodicRetry() }
+    }
+
+    // MARK: - Periodic retry while app is active
+    // The backend runs on an intermittently-reachable local machine, so a single
+    // foreground-transition sync often misses the small windows when it's online.
+    // Retrying every 30s while the app is in the foreground catches it much sooner.
+    private var periodicRetryTask: Task<Void, Never>?
+
+    private func startPeriodicRetry() {
+        guard periodicRetryTask == nil else { return }
+        periodicRetryTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(30))
+                guard !Task.isCancelled else { break }
+                await self?.syncNow()
             }
         }
+    }
+
+    private func stopPeriodicRetry() {
+        periodicRetryTask?.cancel()
+        periodicRetryTask = nil
     }
 }
